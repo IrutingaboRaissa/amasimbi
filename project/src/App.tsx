@@ -48,7 +48,7 @@ function HomePage() {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Reproductive Health Education</h2>
             <p className="text-gray-600 mb-4">Access comprehensive, age-appropriate information about reproductive health.</p>
-            <Button>Start Learning</Button>
+            <Button >Start Learning</Button>
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
@@ -97,8 +97,8 @@ function LearnPage() {
       progress: 30
     },
     {
-      title: "Emotional Wellbeing",
-      description: "Understanding and managing emotions during adolescence",
+      title: "Contraceptive methods",
+      description: "Understanding available contraceptive methods, dosage, and their side effects",
       image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1000",
       progress: 0
     }
@@ -352,8 +352,7 @@ function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700">Language</label>
                   <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
                     <option>English</option>
-                    <option>French</option>
-                    <option>Spanish</option>
+                    <option>Kinywarwanda</option>
                   </select>
                 </div>
                 <div>
