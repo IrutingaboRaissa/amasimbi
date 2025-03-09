@@ -1,6 +1,8 @@
 import { Book, Heart, Home, MessageCircle, User } from 'lucide-react';
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { Button } from './components/ui/button';
+import strongw from '@/assets/images/strongw.png';
+import MyImage from '@/assets/images/MyImage.png';
 
 function Navigation() {
   return (
@@ -32,52 +34,101 @@ function Navigation() {
     </nav>
   );
 }
-
 function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
-      <header className="py-6 px-4">
-        <div className="container mx-auto">
-          <h1 className="text-4xl font-bold text-purple-900">AMASIMBI</h1>
-          <p className="mt-2 text-lg text-gray-600">Empowering young women through education and mentorship</p>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section
+        className="relative py-24 bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${strongw})`,
+          backgroundSize: 'contain', 
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <div className="absolute inset-0 bg-purple-900 opacity-60"></div>
+        <div className="container mx-auto text-center relative z-10">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Empowering Young Women Through Education
+          </h1>
+          <p className="text-lg text-white mb-8">
+            Join our community and unlock your full potential.
+          </p>
+          <Button size="lg" variant="outline" className="text-white">
+            Learn More
+          </Button>
         </div>
-      </header>
+      </section>
 
-      <main className="container mx-auto px-4 py-8">
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Reproductive Health Education</h2>
-            <p className="text-gray-600 mb-4">Access comprehensive, age-appropriate information about reproductive health.</p>
-            <Button >Start Learning</Button>
-          </div>
+      {/* Our Mission Section */}
+      <section className="container mx-auto py-16 px-4">
+        <h2 className="text-3xl font-semibold text-gray-900 mb-8 text-center">
+          Our Mission
+        </h2>
+        <p className="text-lg text-gray-700 text-center">
+        Amasimbi is a mentorship web app aiming to meet the challenge of early pregnancies in Rwanda by providing accessible and culturally sensitive reproductive health information to young women. Research that includes ongoing in-depth interviews with young mothers reveals that one of the factors that contribute to early pregnancies is a lack of information among young women due to cultural taboos and the absence of substantial parent-child communication. This void is what Amasimbi tries to bridge by providing them with research-based information, comprising testimonies, and age-appropriate details about different contraceptive methods and their side effects.
+        </p>
+      </section>
 
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Community Support</h2>
-            <p className="text-gray-600 mb-4">Connect with peers and mentors in a safe, supportive environment.</p>
-            <Button variant="secondary">Join Community</Button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Parent Resources</h2>
-            <p className="text-gray-600 mb-4">Guides and tips for parents to discuss reproductive health with their children.</p>
-            <Button variant="outline">View Resources</Button>
-          </div>
-        </section>
-
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Content</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="bg-purple-100 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">Understanding Your Body</h3>
-              <p className="text-gray-700">Learn about physical and emotional changes during adolescence.</p>
+      {/* Key Programs Section */}
+      <section className="bg-gray-100 py-16 px-4">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-semibold text-gray-900 mb-8 text-center">
+            Key Programs
+          </h2>
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Reproductive Health Education
+              </h3>
+              <p className="text-gray-600">
+                Comprehensive information about reproductive health.
+              </p>
             </div>
-            <div className="bg-purple-100 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">Making Informed Choices</h3>
-              <p className="text-gray-700">Discover tools and resources for making healthy life decisions.</p>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Community Support
+              </h3>
+              <p className="text-gray-600">
+                Safe and supportive environment for peer connections.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Parent Resources
+              </h3>
+              <p className="text-gray-600">
+                Guides for parents to discuss reproductive health.
+              </p>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+
+      {/* Featured Content Section */}
+      <section className="container mx-auto py-16 px-4">
+        <h2 className="text-3xl font-semibold text-gray-900 mb-8 text-center">
+          Featured Content
+        </h2>
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="bg-purple-100 p-6 rounded-lg">
+            <h3 className="text-xl font-semibold text-purple-900 mb-4">
+              Understanding Your Body
+            </h3>
+            <p className="text-gray-700">
+              Learn about physical and emotional changes.
+            </p>
+          </div>
+          <div className="bg-purple-100 p-6 rounded-lg">
+            <h3 className="text-xl font-semibold text-purple-900 mb-4">
+              Making Informed Choices
+            </h3>
+            <p className="text-gray-700">
+              Discover tools for healthy life decisions.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
