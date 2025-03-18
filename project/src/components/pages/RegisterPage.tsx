@@ -27,34 +27,56 @@ export function RegisterPage() {
   };
 
   const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.age) {
-      setError('Please fill in all required fields');
+    // Check required fields
+    if (!formData.email) {
+      setError('Email address is required');
+      return false;
+    }
+    if (!formData.password) {
+      setError('Password is required');
+      return false;
+    }
+    if (!formData.confirmPassword) {
+      setError('Please confirm your password');
+      return false;
+    }
+    if (!formData.age) {
+      setError('Age is required');
       return false;
     }
 
+    // Validate email format
     if (!formData.email.includes('@')) {
       setError('Please enter a valid email address');
       return false;
     }
 
+    // Validate password
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
       return false;
     }
 
+    // Check if passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
 
+    // Validate age
     const age = parseInt(formData.age);
-    if (isNaN(age) || age < 12 || age > 25) {
-      setError('Age must be between 12 and 25');
+    if (isNaN(age)) {
+      setError('Please enter a valid age');
+      return false;
+    }
+    if (age < 12) {
+      setError('You must be at least 12 years old to register');
       return false;
     }
 
+    // Check for parental consent if under 18
     if (age < 18 && !formData.parent_consent) {
-      setError('Parent consent is required for users under 18');
+      setError('Parent/guardian consent is required for users under 18');
       return false;
     }
 
@@ -71,22 +93,56 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
+      console.log('Attempting to register with:', {
+        ...formData,
+        password: '[REDACTED]',
+        confirmPassword: '[REDACTED]'
+      });
+
       const response = await axios.post('http://localhost:5000/api/auth/register', {
         email: formData.email,
         password: formData.password,
+        displayName: formData.email.split('@')[0],
         age: parseInt(formData.age),
         category: formData.category,
         parent_consent: formData.parent_consent
       });
 
-      if (response.data.success) {
+      console.log('Registration response:', {
+        status: response.status,
+        data: response.data
+      });
+
+      if (response.data && response.data.token) {
         setSuccess('Registration successful! Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
+      } else {
+        setError('Registration failed. Please try again.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during registration');
+      console.error('Detailed registration error:', {
+        message: err.message,
+        response: err.response ? {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers
+        } : 'No response',
+        request: err.request ? 'Request was made but no response received' : 'No request made'
+      });
+
+      if (err.message === 'Network Error') {
+        setError('Unable to connect to the server. Please make sure the backend server is running (http://localhost:5000)');
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.status === 400) {
+        setError('Invalid registration details. Please check your information.');
+      } else if (err.response?.status === 409) {
+        setError('An account with this email already exists.');
+      } else {
+        setError(`Registration failed: ${err.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -232,7 +288,6 @@ export function RegisterPage() {
                       type="number"
                       required
                       min="12"
-                      max="25"
                       value={formData.age}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg

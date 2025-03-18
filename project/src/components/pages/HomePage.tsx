@@ -80,25 +80,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-8 sm:py-12 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="text-center p-4 sm:p-6">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                    <Icon size={24} />
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-purple-900 mb-2">{stat.number}</h3>
-                  <p className="text-purple-600">{stat.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+     
 
       {/* Mission & Vision Section */}
       <section className="py-12 sm:py-20 bg-gradient-to-b from-white to-purple-50">
