@@ -112,7 +112,7 @@ export function LearnPage() {
             <i>"Ugendagenda utabaza ugasaza utamenye"</i>
           </p>
           <p className="text-lg text-purple-600">
-            "If you travel without asking, you will grow old without knowing."
+            "If you journey without asking, you will age uninformed."
           </p>
         </div>
 
