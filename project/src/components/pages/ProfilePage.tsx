@@ -1,272 +1,281 @@
-import { User, Bell, Settings, BookOpen, Award, Heart, Calendar, Edit, Camera, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  User,
+  Mail,
+  Calendar,
+  Book,
+  Settings,
+  Shield,
+  Bell,
+  LogOut,
+  Save,
+  CheckCircle
+} from 'lucide-react';
 
 export function ProfilePage() {
-  const achievements = [
-    { title: "Quick Learner", description: "Completed 5 courses in first month", icon: BookOpen },
-    { title: "Active Participant", description: "Posted 20+ times in community", icon: Heart },
-    { title: "Wellness Champion", description: "Completed all health modules", icon: Award }
-  ];
+  const { user, updateProfile, logout } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    displayName: user?.displayName || '',
+    email: user?.email || '',
+    age: user?.age || '',
+    category: user?.category || ''
+  });
 
-  const upcomingEvents = [
-    { title: "Women's Health Workshop", date: "March 15, 2024", time: "2:00 PM" },
-    { title: "Mindfulness Session", date: "March 18, 2024", time: "10:00 AM" },
-    { title: "Community Meetup", date: "March 20, 2024", time: "3:30 PM" }
-  ];
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  const courses = [
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+
+    try {
+      await updateProfile(formData);
+      setSuccess(true);
+    } catch (err) {
+      setError('Failed to update profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      setError('Failed to log out. Please try again.');
+    }
+  };
+
+  const stats = [
     {
-      title: "Understanding Puberty",
-      progress: 60,
-      totalModules: 10,
-      completedModules: 6,
-      lastAccessed: "2 days ago"
+      icon: <Book className="w-5 h-5" />,
+      label: "Courses Completed",
+      value: "5"
     },
     {
-      title: "Menstrual Health",
-      progress: 30,
-      totalModules: 8,
-      completedModules: 3,
-      lastAccessed: "1 week ago"
+      icon: <Calendar className="w-5 h-5" />,
+      label: "Days Active",
+      value: "45"
     },
     {
-      title: "Mental Wellness",
-      progress: 80,
-      totalModules: 12,
-      completedModules: 10,
-      lastAccessed: "Yesterday"
+      icon: <Shield className="w-5 h-5" />,
+      label: "Achievement Points",
+      value: "320"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
-      <header className="bg-purple-100 py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-purple-200">
-                <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop"
-                  alt="Sarah Johnson"
-                  className="w-full h-full object-cover"
-                />
-                <button className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera className="text-white" size={24} />
-                </button>
-              </div>
-              <button className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                <Edit size={16} />
-              </button>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-purple-100 py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <div className="w-24 h-24 bg-purple-200 rounded-full mx-auto mb-6 flex items-center justify-center">
+              <User className="w-12 h-12 text-purple-600" />
             </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-4xl font-bold text-purple-900 mb-2">Sarah Johnson</h1>
-              <p className="text-purple-700 mb-4">Member since January 2024</p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Settings size={18} className="mr-2" />
-                  Edit Profile
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Bell size={18} className="mr-2" />
-                  Notifications
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white text-red-600 hover:text-red-700">
-                  <LogOut size={18} className="mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
+            <h1 className="text-4xl font-bold text-purple-900 mb-2">
+              {user?.displayName || 'Your Profile'}
+            </h1>
+            <p className="text-lg text-purple-700">
+              Manage your account settings and view your progress
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-purple-50 rounded-xl p-6 text-center"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center text-purple-600">
+                  {stat.icon}
+                </div>
+                <h3 className="text-2xl font-bold text-purple-900 mb-1">{stat.value}</h3>
+                <p className="text-purple-700">{stat.label}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </header>
+      </section>
 
-      <main className="container mx-auto py-12 px-4">
-        <div className="grid gap-8 md:grid-cols-3">
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Quick Stats</h2>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <BookOpen size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">3 Courses</h3>
-                    <p className="text-sm text-gray-600">In Progress</p>
-                  </div>
+      {/* Profile Form Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-purple-900">Profile Settings</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-purple-600"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-green-50 text-green-900 p-4 rounded-lg flex items-center gap-2 mb-6"
+                >
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <p>Profile updated successfully!</p>
+                </motion.div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 text-red-900 p-4 rounded-lg mb-6">
+                  {error}
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <Award size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">5 Achievements</h3>
-                    <p className="text-sm text-gray-600">Unlocked</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <Heart size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">20+ Posts</h3>
-                    <p className="text-sm text-gray-600">In Community</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+              )}
 
-            {/* Upcoming Events */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Upcoming Events</h2>
-              <div className="space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex gap-4 p-3 rounded-xl hover:bg-purple-50 transition-colors cursor-pointer">
-                    <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
-                      <Calendar size={20} />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{event.title}</h3>
-                      <p className="text-sm text-gray-600">{event.date} at {event.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full mt-4">View All Events</Button>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-8">
-            {/* Learning Progress */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Learning Progress</h2>
-              <div className="space-y-6">
-                {courses.map((course, index) => (
-                  <div key={index} className="bg-purple-50/50 rounded-xl p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium text-purple-900">{course.title}</h3>
-                        <p className="text-sm text-purple-600">
-                          {course.completedModules} of {course.totalModules} modules completed
-                        </p>
-                      </div>
-                      <span className="text-sm text-gray-500">Last accessed {course.lastAccessed}</span>
-                    </div>
-                    <div className="relative pt-2">
-                      <div className="w-full bg-purple-100 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${course.progress}%` }}
-                        />
-                      </div>
-                      <span className="absolute right-0 top-0 text-sm font-medium text-purple-600">
-                        {course.progress}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button className="w-full mt-6">Continue Learning</Button>
-            </div>
-
-            {/* Achievements */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Recent Achievements</h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                {achievements.map((achievement, index) => {
-                  const Icon = achievement.icon;
-                  return (
-                    <div key={index} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center">
-                      <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white flex items-center justify-center text-purple-600 shadow-sm">
-                        <Icon size={24} />
-                      </div>
-                      <h3 className="font-medium text-purple-900 mb-1">{achievement.title}</h3>
-                      <p className="text-sm text-purple-600">{achievement.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Account Settings */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Account Settings</h2>
-              <div className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-2 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300"
-                    value="sarah.johnson@example.com"
-                    readOnly
+                  <label htmlFor="displayName" className="block text-sm font-medium text-purple-900 mb-2">
+                    Display Name
+                  </label>
+                  <Input
+                    id="displayName"
+                    name="displayName"
+                    value={formData.displayName}
+                    onChange={handleChange}
+                    className="w-full"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Language</label>
-                  <select className="w-full px-4 py-2 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300">
-                    <option>English</option>
-                    <option>Kinywarwanda</option>
-                  </select>
+                  <label htmlFor="email" className="block text-sm font-medium text-purple-900 mb-2">
+                    Email
+                  </label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full"
+                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Notifications</label>
-                  <div className="space-y-3">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Email notifications</span>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="age" className="block text-sm font-medium text-purple-900 mb-2">
+                      Age
                     </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Community updates</span>
+                    <Input
+                      id="age"
+                      name="age"
+                      type="number"
+                      value={formData.age}
+                      onChange={handleChange}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-purple-900 mb-2">
+                      Category
                     </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Event reminders</span>
-                    </label>
+                    <Input
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="w-full"
+                    />
                   </div>
                 </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Saving...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Save className="w-4 h-4" />
+                      Save Changes
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </div>
+
+            {/* Additional Settings */}
+            <div className="mt-8 space-y-4">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                      <Bell className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-purple-900">Notifications</h3>
+                      <p className="text-sm text-purple-700">Manage your notification preferences</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Configure
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-4 mt-6">
-                <Button className="flex-1">Save Changes</Button>
-                <Button variant="outline" className="flex-1">Reset</Button>
+
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                      <Settings className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-purple-900">Account Settings</h3>
+                      <p className="text-sm text-purple-700">Manage your account preferences</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Configure
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-
-      <footer className="bg-purple-50 py-12 text-center text-gray-600 mt-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto mb-8">
-            <h3 className="text-2xl font-semibold text-purple-900 mb-4">Need Help?</h3>
-            <p className="text-purple-700 mb-6">Our support team is here to assist you with any questions or concerns</p>
-            <Button variant="outline" className="bg-white hover:bg-purple-50">Contact Support</Button>
-          </div>
-          <nav className="mb-4">
-            <a href="#" className="mr-6 hover:text-purple-600">About Us</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Contact</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-600">Terms of Service</a>
-          </nav>
-          <p className="text-sm text-purple-700">&copy; 2024 AMASIMBI. All rights reserved.</p>
-        </div>
-      </footer>
+      </section>
     </div>
   );
 } 

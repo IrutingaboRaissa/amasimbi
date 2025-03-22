@@ -4,10 +4,10 @@ import { AuthRequest } from '../middleware/auth';
 
 export const postController = {
   // Create a new post
-  async create(req: AuthRequest, res: Response) {
+  async createPost(req: Request, res: Response) {
     try {
       const { content } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -16,68 +16,76 @@ export const postController = {
       const post = await prisma.post.create({
         data: {
           content,
-          author: {
-            connect: { id: userId },
-          },
+          authorId: userId
         },
         include: {
           author: {
             select: {
               id: true,
               displayName: true,
-              avatar: true,
-            },
-          },
-        },
+              avatar: true
+            }
+          }
+        }
       });
 
-      return res.status(201).json(post);
+      res.status(201).json(post);
     } catch (error) {
       console.error('Create post error:', error);
-      return res.status(500).json({ error: 'Failed to create post' });
+      res.status(500).json({ error: 'Failed to create post' });
     }
   },
 
-  // Get all posts
-  async getAll(_req: Request, res: Response) {
+  // Get all posts with pagination
+  async getPosts(req: Request, res: Response) {
     try {
-      const posts = await prisma.post.findMany({
-        include: {
-          author: {
-            select: {
-              id: true,
-              displayName: true,
-              avatar: true,
-            },
-          },
-          likes: true,
-          comments: {
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  displayName: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
 
-      // Return empty array if no posts found
-      return res.json(posts || []);
+      const [posts, total] = await Promise.all([
+        prisma.post.findMany({
+          skip,
+          take: limit,
+          orderBy: {
+            createdAt: 'desc'
+          },
+          include: {
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+                avatar: true
+              }
+            },
+            _count: {
+              select: {
+                comments: true,
+                likes: true
+              }
+            }
+          }
+        }),
+        prisma.post.count()
+      ]);
+
+      res.json({
+        posts,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
     } catch (error) {
-      console.error('Get all posts error:', error);
-      return res.status(500).json({ error: 'Failed to fetch posts' });
+      console.error('Get posts error:', error);
+      res.status(500).json({ error: 'Failed to get posts' });
     }
   },
 
-  // Get a single post
-  async getOne(req: Request, res: Response) {
+  // Get a single post by ID
+  async getPost(req: Request, res: Response) {
     try {
       const { id } = req.params;
 
@@ -88,49 +96,56 @@ export const postController = {
             select: {
               id: true,
               displayName: true,
-              avatar: true,
-            },
+              avatar: true
+            }
           },
-          likes: true,
           comments: {
             include: {
               author: {
                 select: {
                   id: true,
                   displayName: true,
-                  avatar: true,
-                },
-              },
+                  avatar: true
+                }
+              }
             },
+            orderBy: {
+              createdAt: 'desc'
+            }
           },
-        },
+          _count: {
+            select: {
+              comments: true,
+              likes: true
+            }
+          }
+        }
       });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      return res.json(post);
+      res.json(post);
     } catch (error) {
       console.error('Get post error:', error);
-      return res.status(500).json({ error: 'Failed to fetch post' });
+      res.status(500).json({ error: 'Failed to get post' });
     }
   },
 
   // Update a post
-  async update(req: AuthRequest, res: Response) {
+  async updatePost(req: Request, res: Response) {
     try {
       const { id } = req.params;
       const { content } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const post = await prisma.post.findUnique({
-        where: { id },
-        select: { authorId: true },
+        where: { id }
       });
 
       if (!post) {
@@ -149,32 +164,31 @@ export const postController = {
             select: {
               id: true,
               displayName: true,
-              avatar: true,
-            },
-          },
-        },
+              avatar: true
+            }
+          }
+        }
       });
 
-      return res.json(updatedPost);
+      res.json(updatedPost);
     } catch (error) {
       console.error('Update post error:', error);
-      return res.status(500).json({ error: 'Failed to update post' });
+      res.status(500).json({ error: 'Failed to update post' });
     }
   },
 
   // Delete a post
-  async delete(req: AuthRequest, res: Response) {
+  async deletePost(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
       const post = await prisma.post.findUnique({
-        where: { id },
-        select: { authorId: true },
+        where: { id }
       });
 
       if (!post) {
@@ -186,13 +200,13 @@ export const postController = {
       }
 
       await prisma.post.delete({
-        where: { id },
+        where: { id }
       });
 
-      return res.status(204).send();
+      res.status(204).send();
     } catch (error) {
       console.error('Delete post error:', error);
-      return res.status(500).json({ error: 'Failed to delete post' });
+      res.status(500).json({ error: 'Failed to delete post' });
     }
   },
 

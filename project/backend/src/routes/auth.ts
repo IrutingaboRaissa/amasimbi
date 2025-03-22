@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Register new user
+// Public routes
 router.post('/register', authController.register);
-
-// Login user
 router.post('/login', authController.login);
 
-// Get current user
-router.get('/me', authController.getCurrentUser);
+// Protected routes
+router.get('/profile', authMiddleware, authController.getProfile);
+router.put('/profile', authMiddleware, authController.updateProfile);
 
 export { router as authRouter }; 

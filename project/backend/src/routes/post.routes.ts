@@ -1,20 +1,16 @@
 import { Router } from 'express';
 import { postController } from '../controllers/post.controller';
-import { authenticate } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
 // Public routes
-router.get('/', postController.getAll);
+router.get('/', postController.getPosts);
+router.get('/:id', postController.getPost);
 
 // Protected routes
-router.post('/', authenticate, postController.create);
+router.post('/', authMiddleware, postController.createPost);
+router.put('/:id', authMiddleware, postController.updatePost);
+router.delete('/:id', authMiddleware, postController.deletePost);
 
-// Routes with ID parameter
-router.get('/:id', postController.getOne);
-router.put('/:id', authenticate, postController.update);
-router.delete('/:id', authenticate, postController.delete);
-router.post('/:id/like', authenticate, postController.like);
-router.delete('/:id/like', authenticate, postController.unlike);
-
-export default router; 
+export const postRouter = router; 

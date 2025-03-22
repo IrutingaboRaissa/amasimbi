@@ -1,309 +1,314 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, MessageCircle, Share2, Users, Filter, Search, Plus, Send, MoreVertical, Flag, Bookmark } from 'lucide-react';
-import community from '@/assets/images/community.png';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/AuthContext';
+import { getPosts, addPost, getComments, addComment } from '@/services/storage';
+import { Post, Comment } from '@/types';
+import {
+  Search,
+  MessageSquare,
+  Heart,
+  MessageCircle,
+  Plus,
+  Filter,
+  X,
+  Send,
+  ThumbsUp,
+  Clock,
+  Users,
+  Calendar,
+  ChevronRight,
+  Share2,
+  Bookmark
+} from 'lucide-react';
+import { communityImages } from '@/assets/images';
 
-interface Comment {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  timestamp: string;
-  likes: number;
-}
+const discussions = [
+  {
+    id: 1,
+    title: 'Tips for Exam Preparation',
+    description: 'Share your study techniques and exam preparation strategies.',
+    author: 'Sarah Johnson',
+    avatar: communityImages.discussions.discussion1,
+    likes: 45,
+    comments: 23,
+    category: 'Academic'
+  },
+  {
+    id: 2,
+    title: 'Career Planning Advice',
+    description: 'Discuss career paths and professional development opportunities.',
+    author: 'Michael Chen',
+    avatar: communityImages.discussions.discussion2,
+    likes: 38,
+    comments: 15,
+    category: 'Career'
+  }
+];
 
-interface Post {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  likes: number;
-  comments: Comment[];
-  timestamp: string;
-  category: string;
-}
+const events = [
+  {
+    id: 1,
+    title: 'Study Group Meetup',
+    description: 'Join us for a collaborative study session focused on mathematics.',
+    date: '2024-03-25',
+    time: '14:00',
+    location: 'Online',
+    image: communityImages.events.event1,
+    attendees: 45
+  },
+  {
+    id: 2,
+    title: 'Career Workshop',
+    description: 'Learn about different career paths and how to prepare for them.',
+    date: '2024-03-28',
+    time: '15:00',
+    location: 'Online',
+    image: communityImages.events.event2,
+    attendees: 32
+  }
+];
 
-const CommunityPage = () => {
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: '1',
-      author: {
-        name: 'Sarah 🌸',
-        avatar: '🌸'
-      },
-      content: 'Just attended my first AMASIMBI workshop and it was amazing! The support and guidance were incredible. Thank you to everyone who made it possible!',
-      likes: 24,
-      comments: [
-        {
-          id: 'c1',
-          author: {
-            name: 'Emma 🌷',
-            avatar: '🌷'
-          },
-          content: 'I was there too! The workshop was so informative and the community support was amazing.',
-          timestamp: '1 hour ago',
-          likes: 5
-        }
-      ],
-      timestamp: '2 hours ago',
-      category: 'Workshop'
-    },
-    {
-      id: '2',
-      author: {
-        name: 'Maria 🌺',
-        avatar: '🌺'
-      },
-      content: 'Looking for study buddies for the upcoming exam. Anyone interested in forming a study group?',
-      likes: 15,
-      comments: [
-        {
-          id: 'c2',
-          author: {
-            name: 'Lisa 🌹',
-            avatar: '🌹'
-          },
-          content: 'I would love to join! What subject are you studying?',
-          timestamp: '30 minutes ago',
-          likes: 2
-        }
-      ],
-      timestamp: '5 hours ago',
-      category: 'Study Group'
-    },
-    {
-      id: '3',
-      author: {
-        name: 'Emma 🌷',
-        avatar: '🌷'
-      },
-      content: 'Sharing my success story: After joining AMASIMBI, I found the confidence to pursue my dreams. The mentorship program is truly life-changing!',
-      likes: 42,
-      comments: [
-        {
-          id: 'c3',
-          author: {
-            name: 'Sophie 🌻',
-            avatar: '🌻'
-          },
-          content: 'This is so inspiring! Thank you for sharing your journey.',
-          timestamp: '2 hours ago',
-          likes: 8
-        }
-      ],
-      timestamp: '1 day ago',
-      category: 'Success Story'
-    }
-  ]);
+export function CommunityPage() {
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [showNewPostForm, setShowNewPostForm] = useState(false);
+  const [newPost, setNewPost] = useState({ title: '', content: '', category: '' });
+  const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [newComment, setNewComment] = useState<Record<string, string>>({});
 
-  const [newPost, setNewPost] = useState('');
-  const [newComment, setNewComment] = useState('');
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
+  const categories = [
+    'Health Education',
+    'Family Resources',
+    'External Resources',
+    'General Discussion',
+    'Support Group'
+  ];
 
-  const handleLikePost = (postId: string) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, likes: post.likes + 1 }
-        : post
-    ));
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = () => {
+    const allPosts = getPosts();
+    setPosts(allPosts);
+    
+    // Load comments for each post
+    const commentsMap: Record<string, Comment[]> = {};
+    allPosts.forEach(post => {
+      commentsMap[post.id] = getComments(post.id);
+    });
+    setComments(commentsMap);
   };
 
-  const handleAddComment = (postId: string) => {
-    if (!newComment.trim()) return;
-
-    const comment: Comment = {
-      id: `c${Date.now()}`,
-      author: {
-        name: 'You 🌸',
-        avatar: '🌸'
-      },
-      content: newComment,
-      timestamp: 'Just now',
-      likes: 0
-    };
-
-    setPosts(posts.map(post =>
-      post.id === postId
-        ? { ...post, comments: [...post.comments, comment] }
-        : post
-    ));
-    setNewComment('');
-  };
-
-  const handleCreatePost = () => {
-    if (!newPost.trim()) return;
+  const handleNewPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
 
     const post: Post = {
       id: Date.now().toString(),
-      author: {
-        name: 'You 🌸',
-        avatar: '🌸'
-      },
-      content: newPost,
+      authorId: user.id,
+      authorName: user.displayName,
+      authorAvatar: user.avatar,
+      title: newPost.title,
+      content: newPost.content,
+      category: newPost.category,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       likes: 0,
-      comments: [],
-      timestamp: 'Just now',
-      category: 'General'
+      commentCount: 0
     };
 
-    setPosts([post, ...posts]);
-    setNewPost('');
+    addPost(post);
+    setPosts(prev => [post, ...prev]);
+    setNewPost({ title: '', content: '', category: '' });
+    setShowNewPostForm(false);
   };
 
-  const filteredPosts = activeTab === 'all' 
-    ? posts 
-    : posts.filter(post => post.category === activeTab);
+  const handleAddComment = async (postId: string, e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newComment[postId]) return;
+
+    const comment: Comment = {
+      id: Date.now().toString(),
+      postId,
+      authorId: user.id,
+      authorName: user.displayName,
+      authorAvatar: user.avatar,
+      content: newComment[postId],
+      createdAt: new Date().toISOString(),
+      likes: 0
+    };
+
+    addComment(postId, comment);
+    setComments(prev => ({
+      ...prev,
+      [postId]: [...(prev[postId] || []), comment]
+    }));
+    setNewComment(prev => ({ ...prev, [postId]: '' }));
+  };
+
+  const handleLike = (postId: string) => {
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === postId
+          ? { ...post, likes: post.likes + 1 }
+          : post
+      )
+    );
+  };
+
+  const filteredDiscussions = discussions.filter(discussion => {
+    const matchesSearch = discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         discussion.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || discussion.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <img
-            src={community}
-            alt="community"
-            className="w-16 h-16 text-purple-600 mx-auto mb-6"
-          />
-          <h1 className="text-4xl font-bold text-purple-900 mb-4">Our Community</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Connect with other young women, share experiences, and grow together in a safe and supportive environment.
-          </p>
+      {/* Hero Section */}
+      <div className="relative h-[400px] flex items-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${communityImages.hero})` }}
+        >
+          <div className="absolute inset-0 bg-purple-900 bg-opacity-60" />
         </div>
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-3xl text-white"
+          >
+            <h1 className="text-4xl font-bold mb-4">Community Hub</h1>
+            <p className="text-xl mb-8">
+              Connect with peers, share experiences, and grow together in our supportive community.
+            </p>
+            <div className="flex gap-4">
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search discussions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                  />
+                </div>
+              </div>
+              <Button variant="outline" className="text-white border-white hover:bg-white hover:text-purple-600">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
-        {/* Main Content */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Sidebar - Categories */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 sticky top-8">
-              <h2 className="text-xl font-semibold text-purple-900 mb-4">Categories</h2>
-              <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="all">All Posts</TabsTrigger>
-                  <TabsTrigger value="Workshop">Workshops</TabsTrigger>
-                  <TabsTrigger value="Study Group">Study Groups</TabsTrigger>
-                  <TabsTrigger value="Success Story">Success Stories</TabsTrigger>
-                </TabsList>
-              </Tabs>
+          {/* Main Content - Discussions */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-purple-900">Active Discussions</h2>
+              <Button className="bg-purple-600 hover:bg-purple-700">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Start Discussion
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {filteredDiscussions.map((discussion, index) => (
+                <motion.div
+                  key={discussion.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                >
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <img
+                        src={discussion.avatar}
+                        alt={discussion.author}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{discussion.title}</h3>
+                        <p className="text-sm text-gray-500">Posted by {discussion.author}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 mb-4">{discussion.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
+                          <Heart className="w-4 h-4" />
+                          <span className="text-sm">{discussion.likes}</span>
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-sm">{discussion.comments}</span>
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
+                          <Bookmark className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <span className="text-sm text-purple-600 font-medium">{discussion.category}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          {/* Main Feed */}
-          <div className="lg:col-span-2">
-            {/* Create Post */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-purple-100">
-              <Textarea
-                placeholder="What's on your mind?"
-                value={newPost}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewPost(e.target.value)}
-                className="mb-4 min-h-[100px] border-purple-200 focus:ring-purple-300"
-              />
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="border-purple-200 text-purple-700">
-                    Add Image
-                  </Button>
-                  <Button variant="outline" size="sm" className="border-purple-200 text-purple-700">
-                    Add Category
-                  </Button>
-                </div>
-                <Button onClick={handleCreatePost} className="bg-purple-600 hover:bg-purple-700">
-                  Post
-                </Button>
-              </div>
-            </div>
-
-            {/* Posts Feed */}
+          {/* Sidebar - Events */}
+          <div>
+            <h2 className="text-2xl font-bold text-purple-900 mb-6">Upcoming Events</h2>
             <div className="space-y-6">
-              {filteredPosts.map((post) => (
-                <div key={post.id} className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{post.author.avatar}</span>
-                      <div>
-                        <h3 className="font-semibold text-purple-900">{post.author.name}</h3>
-                        <p className="text-sm text-purple-500">{post.timestamp}</p>
+              {events.map((event, index) => (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                >
+                  <div className="h-32 overflow-hidden">
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
+                    <p className="text-gray-600 mb-4">{event.description}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Calendar className="w-4 h-4" />
+                        <span className="text-sm">{event.date} at {event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm">{event.attendees} attendees</span>
                       </div>
                     </div>
-                    <Button variant="secondary" size="sm" className="text-purple-500 hover:text-purple-700">
-                      <MoreVertical size={20} />
+                    <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
+                      Join Event <ChevronRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-gray-700 mb-4">{post.content}</p>
-                  <div className="flex items-center gap-4 text-purple-500 mb-4">
-                    <button 
-                      className="flex items-center gap-1 hover:text-purple-600 transition-colors"
-                      onClick={() => handleLikePost(post.id)}
-                    >
-                      <Heart size={18} />
-                      <span>{post.likes}</span>
-                    </button>
-                    <button 
-                      className="flex items-center gap-1 hover:text-purple-600 transition-colors"
-                      onClick={() => setSelectedPost(post)}
-                    >
-                      <MessageCircle size={18} />
-                      <span>{post.comments.length}</span>
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                      <Share2 size={18} />
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                      <Bookmark size={18} />
-                    </button>
-                  </div>
-
-                  {/* Comments Section */}
-                  <div className="border-t border-purple-100 pt-4">
-                    <div className="space-y-4 mb-4">
-                      {post.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <span className="text-xl">{comment.author.avatar}</span>
-                          <div className="flex-1">
-                            <div className="bg-purple-50 rounded-lg p-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-purple-900">{comment.author.name}</span>
-                                <span className="text-sm text-purple-500">{comment.timestamp}</span>
-                              </div>
-                              <p className="text-gray-700">{comment.content}</p>
-                              <div className="flex items-center gap-4 mt-2 text-purple-500">
-                                <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                                  <Heart size={16} />
-                                  <span className="text-sm">{comment.likes}</span>
-                                </button>
-                                <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                                  <Flag size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Write a comment..."
-                        value={newComment}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewComment(e.target.value)}
-                        className="flex-1 border-purple-200 focus:ring-purple-300"
-                      />
-                      <Button 
-                        onClick={() => handleAddComment(post.id)}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Send size={18} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -311,8 +316,6 @@ const CommunityPage = () => {
       </div>
     </div>
   );
-};
-
-export default CommunityPage;
+}
 
 

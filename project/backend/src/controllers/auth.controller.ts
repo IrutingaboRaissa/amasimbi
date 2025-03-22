@@ -3,28 +3,25 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
 export const authController = {
   // Register a new user
   async register(req: Request, res: Response) {
     try {
-      const { email, password, displayName, age, category, parent_consent } = req.body;
+      const { email, password, displayName, avatar, age, category, parent_consent } = req.body;
 
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({
-        where: { email },
+        where: { email }
       });
 
       if (existingUser) {
-        return res.status(409).json({ error: 'Email already registered' });
+        return res.status(400).json({ error: 'User already exists' });
       }
 
       // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      // Generate random avatar emoji
-      const emojis = ['🌸', '🌺', '🌷', '🌹', '🌻', '🌼', '🌿', '🍀'];
-      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user
       const user = await prisma.user.create({
@@ -32,35 +29,32 @@ export const authController = {
           email,
           password: hashedPassword,
           displayName,
+          avatar,
           age,
           category,
-          parent_consent,
-          avatar: randomEmoji,
-        },
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          avatar: true,
-          age: true,
-          category: true,
-        },
+          parent_consent
+        }
       });
 
       // Generate JWT token
       const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET || 'your-secret-key',
+        { userId: user.id, email: user.email },
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
-      return res.status(201).json({
-        user,
+      res.status(201).json({
         token,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          avatar: user.avatar
+        }
       });
     } catch (error) {
       console.error('Registration error:', error);
-      return res.status(500).json({ error: 'Failed to register user' });
+      res.status(500).json({ error: 'Failed to register user' });
     }
   },
 
@@ -71,60 +65,53 @@ export const authController = {
 
       // Find user
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email }
       });
 
       if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Check password
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      // Verify password
+      const validPassword = await bcrypt.compare(password, user.password);
 
-      if (!isValidPassword) {
+      if (!validPassword) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       // Generate JWT token
       const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET || 'your-secret-key',
+        { userId: user.id, email: user.email },
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
-      return res.json({
+      res.json({
+        token,
         user: {
           id: user.id,
           email: user.email,
           displayName: user.displayName,
-          avatar: user.avatar,
-          age: user.age,
-          category: user.category,
-        },
-        token,
+          avatar: user.avatar
+        }
       });
     } catch (error) {
       console.error('Login error:', error);
-      return res.status(500).json({ error: 'Failed to login' });
+      res.status(500).json({ error: 'Failed to login' });
     }
   },
 
-  // Get current user
-  async getCurrentUser(req: Request, res: Response) {
+  // Get user profile
+  async getProfile(req: Request, res: Response) {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
+      const userId = req.user?.userId;
 
-      if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as {
-        id: string;
-        email: string;
-      };
-
       const user = await prisma.user.findUnique({
-        where: { id: decoded.id },
+        where: { id: userId },
         select: {
           id: true,
           email: true,
@@ -132,16 +119,59 @@ export const authController = {
           avatar: true,
           age: true,
           category: true,
-        },
+          parent_consent: true,
+          createdAt: true,
+          updatedAt: true
+        }
       });
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      return res.json(user);
+      res.json(user);
     } catch (error) {
-      return res.status(401).json({ error: 'Invalid token' });
+      console.error('Profile error:', error);
+      res.status(500).json({ error: 'Failed to get profile' });
     }
   },
+
+  // Update user profile
+  async updateProfile(req: Request, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      const { displayName, avatar, age, category, parent_consent } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          displayName,
+          avatar,
+          age,
+          category,
+          parent_consent
+        },
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          avatar: true,
+          age: true,
+          category: true,
+          parent_consent: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+
+      res.json(user);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  }
 }; 

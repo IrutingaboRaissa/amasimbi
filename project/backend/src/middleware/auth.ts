@@ -2,6 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: string;
+        email: string;
+      };
+    }
+  }
+}
+
 export interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -10,25 +24,31 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticate = async (
-  req: AuthRequest,
+export const authMiddleware = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' });
+    }
+
+    const token = authHeader.split(' ')[1];
 
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: string;
       email: string;
     };
 
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: decoded.userId },
       select: {
         id: true,
         email: true,
@@ -44,6 +64,7 @@ export const authenticate = async (
     next();
     return;
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ error: 'Invalid token' });
   }
 }; 
