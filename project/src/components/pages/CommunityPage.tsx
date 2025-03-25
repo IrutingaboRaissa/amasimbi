@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,10 @@ import {
   Calendar,
   Clock
 } from 'lucide-react';
+import { postService } from '@/services/api';
+import { AnonymousPost } from '@/components/AnonymousPost';
+import { AnonymousComment } from '@/components/AnonymousComment';
+import { Post, Comment } from '@/types';
 
 const discussions = [
   {
@@ -89,186 +93,137 @@ const events = [
 ];
 
 export function CommunityPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredDiscussions = discussions.filter(discussion => {
-    const matchesSearch = discussion.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         discussion.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || discussion.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const loadPosts = async () => {
+    try {
+      const fetchedPosts = await postService.getPosts();
+      setPosts(fetchedPosts);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const categories = Array.from(new Set(discussions.map(d => d.category)));
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const handlePostCreated = () => {
+    loadPosts();
+  };
+
+  const handleCommentCreated = async () => {
+    if (selectedPost) {
+      const updatedPost = await postService.getPost(selectedPost.id);
+      setSelectedPost(updatedPost);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-[400px] flex items-center">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${communityImages.hero})` }}
-        >
-          <div className="absolute inset-0 bg-purple-900 bg-opacity-60" />
-        </div>
-        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl text-white"
-          >
-            <h1 className="text-4xl font-bold mb-4">
-              Join Our Learning Community
-            </h1>
-            <p className="text-xl mb-8">
-              Connect with fellow learners, share experiences, and grow together.
-            </p>
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Search discussions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white bg-opacity-10 border-white border-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:bg-opacity-20"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white w-5 h-5" />
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Community Discussions</h1>
+      
+      <AnonymousPost onPostCreated={handlePostCreated} />
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Discussions */}
-          <div className="lg:col-span-2">
-            {/* Categories */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === category
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            {/* Discussions List */}
-            <div className="space-y-6">
-              {filteredDiscussions.map((discussion, index) => (
-                <motion.div
-                  key={discussion.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-xl shadow-lg p-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={discussion.avatar}
-                      alt={discussion.author}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-sm">
-                          {discussion.category}
-                        </span>
-                        <button className="text-gray-400 hover:text-purple-600">
-                          <Bookmark className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        {discussion.title}
-                      </h3>
-                      <p className="text-gray-600 mb-4">{discussion.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
-                            <Heart className="w-5 h-5" />
-                            <span>{discussion.likes}</span>
-                          </button>
-                          <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
-                            <MessageCircle className="w-5 h-5" />
-                            <span>{discussion.comments}</span>
-                          </button>
-                          <button className="flex items-center gap-1 text-gray-500 hover:text-purple-600">
-                            <Share2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Posted by {discussion.author}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Events Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-purple-900 mb-6">
-                Upcoming Events
-              </h2>
-              <div className="space-y-6">
-                {events.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-50 rounded-lg overflow-hidden"
-                  >
-                    <div className="h-32 overflow-hidden">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {event.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        {event.description}
-                      </p>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {event.date}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {event.time}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Users className="w-4 h-4 mr-1" />
-                          {event.attendees} attendees
-                        </div>
-                        <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
-                          Join Event
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Recent Posts</h2>
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <div
+                key={post.id}
+                className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedPost(post)}
+              >
+                <div className="flex items-center mb-2">
+                  <img
+                    src={post.author.avatar}
+                    alt={post.author.displayName}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                  <span className="font-medium">{post.author.displayName}</span>
+                  <span className="text-gray-500 text-sm ml-2">
+                    {new Date(post.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
+                <p className="text-gray-600 line-clamp-3">{post.content}</p>
+                <div className="mt-2 text-sm text-gray-500">
+                  {post.comments.length} comments
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
+
+        {selectedPost && (
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Post Details</h2>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="flex items-center mb-4">
+                <img
+                  src={selectedPost.author.avatar}
+                  alt={selectedPost.author.displayName}
+                  className="w-10 h-10 rounded-full mr-3"
+                />
+                <div>
+                  <div className="font-medium">{selectedPost.author.displayName}</div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(selectedPost.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold mb-4">{selectedPost.title}</h3>
+              <p className="text-gray-700 whitespace-pre-wrap">{selectedPost.content}</p>
+            </div>
+
+            <AnonymousComment
+              postId={selectedPost.id}
+              onCommentCreated={handleCommentCreated}
+            />
+
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">Comments</h3>
+              {selectedPost.comments.map((comment) => (
+                <div key={comment.id} className="bg-white rounded-lg shadow-md p-4">
+                  <div className="flex items-center mb-2">
+                    <img
+                      src={comment.author.avatar}
+                      alt={comment.author.displayName}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    <span className="font-medium">{comment.author.displayName}</span>
+                    <span className="text-gray-500 text-sm ml-2">
+                      {new Date(comment.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-700">{comment.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

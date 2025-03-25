@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { config } from '@/config';
 
+const API_URL = 'http://localhost:3001/api';
+
 const api = axios.create({
-  baseURL: config.api.url,
+  baseURL: API_URL,
   timeout: config.api.timeout,
   headers: {
     'Content-Type': 'application/json',
@@ -89,9 +91,11 @@ export const authService = {
 
 export interface Post {
   id: string;
+  title: string;
   content: string;
   author: User;
-  likes: number;
+  isAnonymous: boolean;
+  anonymousId?: string;
   comments: Comment[];
   createdAt: string;
   updatedAt: string;
@@ -102,38 +106,50 @@ export interface Comment {
   id: string;
   content: string;
   author: User;
-  likes: number;
+  isAnonymous: boolean;
+  anonymousId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export const postService = {
   async getPosts(): Promise<Post[]> {
-    const response = await api.get<Post[]>('/posts');
-    return response.data;
+    const response = await api.get<{ data: { posts: Post[] } }>('/posts');
+    return response.data.data.posts;
   },
 
-  async createPost(content: string, image?: string): Promise<Post> {
-    const response = await api.post<Post>('/posts', { content, image });
-    return response.data;
+  async createPost(data: { title: string; content: string; isAnonymous?: boolean }): Promise<Post> {
+    const response = await api.post<{ data: { post: Post } }>('/posts', data);
+    return response.data.data.post;
   },
 
   async updatePost(id: string, content: string): Promise<Post> {
-    const response = await api.put<Post>(`/posts/${id}`, { content });
-    return response.data;
+    const response = await api.put<{ data: { post: Post } }>(`/posts/${id}`, { content });
+    return response.data.data.post;
   },
 
   async deletePost(id: string): Promise<void> {
     await api.delete(`/posts/${id}`);
   },
 
-  async likePost(id: string): Promise<void> {
-    await api.post(`/likes/post/${id}`);
+  async getPost(id: string): Promise<Post> {
+    const response = await api.get<{ data: { post: Post } }>(`/posts/${id}`);
+    return response.data.data.post;
   },
 
-  async unlikePost(id: string): Promise<void> {
-    await api.delete(`/likes/post/${id}`);
+  async createComment(postId: string, data: { content: string; isAnonymous?: boolean }): Promise<Comment> {
+    const response = await api.post<{ data: { comment: Comment } }>(`/posts/${postId}/comments`, data);
+    return response.data.data.comment;
   },
+
+  async updateComment(id: string, content: string): Promise<Comment> {
+    const response = await api.put<{ data: { comment: Comment } }>(`/comments/${id}`, { content });
+    return response.data.data.comment;
+  },
+
+  async deleteComment(id: string): Promise<void> {
+    await api.delete(`/comments/${id}`);
+  }
 };
 
 export const commentService = {
@@ -163,4 +179,6 @@ export const commentService = {
   async unlikeComment(id: string): Promise<void> {
     await api.delete(`/likes/comment/${id}`);
   },
-}; 
+};
+
+export default api; 

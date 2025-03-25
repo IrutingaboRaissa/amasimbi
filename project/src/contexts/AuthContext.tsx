@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveUserData, getUserData } from '@/services/storage';
+import { auth, user } from '@/services/api';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -16,34 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database with localStorage persistence
-const getMockUsers = (): Record<string, { user: User; password: string }> => {
-  const stored = localStorage.getItem('mockUsers');
-  if (stored) {
-    return JSON.parse(stored);
-  }
-  // Initialize with test user if no data exists
-  const initialUsers = {
-    'test@example.com': {
-      user: {
-        id: '1',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        age: 18,
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString()
-      },
-      password: 'password123'
-    }
-  };
-  localStorage.setItem('mockUsers', JSON.stringify(initialUsers));
-  return initialUsers;
-};
-
-const saveMockUsers = (users: Record<string, { user: User; password: string }>) => {
-  localStorage.setItem('mockUsers', JSON.stringify(users));
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,15 +24,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Load user data from storage on mount
-    const loadUser = () => {
+    const loadUser = async () => {
       try {
-        const userData = getUserData();
-        if (userData) {
-          setUser(userData);
+        const token = localStorage.getItem('token');
+        if (token) {
+          const { data } = await user.getProfile();
+          setUser(data.user);
         }
       } catch (error) {
         console.error('Error loading user data:', error);
-        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       } finally {
         setLoading(false);
       }
@@ -86,22 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Password is required');
       }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockUsers = getMockUsers();
-      const mockUser = mockUsers[email];
-      
-      if (!mockUser) {
-        throw new Error('Account not found. Please check your email');
-      }
-
-      if (mockUser.password !== password) {
-        throw new Error('Invalid password');
-      }
-      
-      setUser(mockUser.user);
-      saveUserData(mockUser.user);
+      const { data } = await auth.login({ email, password });
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to login. Please try again.';
@@ -133,31 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('You must be between 12 and 25 years old to register');
       }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockUsers = getMockUsers();
-      if (mockUsers[email]) {
-        throw new Error('An account with this email already exists');
-      }
-
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        displayName,
-        age,
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString()
-      };
-
-      mockUsers[email] = {
-        user: newUser,
-        password
-      };
-
-      saveMockUsers(mockUsers);
-      setUser(newUser);
-      saveUserData(newUser);
+      const { data } = await auth.register({ email, password, displayName, age });
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to register. Please try again.';
@@ -170,23 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Clear local storage
-      localStorage.removeItem('user');
-      
+      localStorage.removeItem('token');
       setUser(null);
       navigate('/');
     } catch (err) {
-      const errorMessage = 'Failed to logout. Please try again.';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
+      console.error('Logout error:', err);
     }
   };
 
@@ -199,44 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('No user logged in');
       }
 
-      const mockUsers = getMockUsers();
-      
-      // Validate email if it's being updated
-      if (data.email && data.email !== user.email) {
-        if (mockUsers[data.email]) {
-          throw new Error('An account with this email already exists');
-        }
-      }
-
-      // Update user data
-      const updatedUser = {
-        ...user,
-        ...data,
-        lastActive: new Date().toISOString()
-      };
-
-      // Update context and storage
-      setUser(updatedUser);
-      saveUserData(updatedUser);
-
-      // Update mock database
-      if (data.email && data.email !== user.email) {
-        // If email is changed, update the key in mockUsers
-        mockUsers[data.email] = {
-          ...mockUsers[user.email],
-          user: updatedUser
-        };
-        delete mockUsers[user.email];
-      } else {
-        // Otherwise just update the user data
-        mockUsers[user.email] = {
-          ...mockUsers[user.email],
-          user: updatedUser
-        };
-      }
-
-      saveMockUsers(mockUsers);
-      setError(null);
+      const { data: response } = await user.updateProfile(data);
+      setUser(response.user);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
       setError(errorMessage);
