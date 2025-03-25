@@ -1,71 +1,89 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { HomePage } from './components/pages/HomePage';
-import { LearnPage } from './components/pages/LearnPage';
-import CommunityPage from './components/pages/CommunityPage';
-import { ResourcesPage } from './components/pages/ResourcesPage';
-import { ProfilePage } from './components/pages/ProfilePage';
-import { LoginPage } from './components/pages/LoginPage';
-import { RegisterPage } from './components/pages/RegisterPage';
-import { Navigation } from './components/layout/Navigation';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { HomePage } from '@/components/pages/HomePage';
+import { LoginPage } from '@/components/pages/LoginPage';
+import { RegisterPage } from '@/components/pages/RegisterPage';
+import { ForgotPasswordPage } from '@/components/pages/ForgotPasswordPage';
+import { CommunityPage } from '@/components/pages/CommunityPage';
+import { ResourcesPage } from '@/components/pages/ResourcesPage';
+import { ProfilePage } from '@/components/pages/ProfilePage';
+import { AboutPage } from '@/components/pages/AboutPage';
+import { ContactPage } from '@/components/pages/ContactPage';
+import { LearnPage } from '@/components/pages/LearnPage';
+import { DashboardPage } from '@/components/pages/DashboardPage';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+function AppContent() {
+  const location = useLocation();
+  const { user } = useAuth();
 
-  return <>{children}</>;
-}
-
-export function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
 
-            {/* Protected routes */}
-            <Route path="/home" element={
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
               <ProtectedRoute>
-                <Navigation />
-                <HomePage />
+                <DashboardPage />
               </ProtectedRoute>
-            } />
-            <Route path="/learn" element={
+            }
+          />
+          <Route
+            path="/learn"
+            element={
               <ProtectedRoute>
-                <Navigation />
                 <LearnPage />
               </ProtectedRoute>
-            } />
-            <Route path="/community" element={
+            }
+          />
+          <Route
+            path="/community"
+            element={
               <ProtectedRoute>
-                <Navigation />
                 <CommunityPage />
               </ProtectedRoute>
-            } />
-            <Route path="/resources" element={
+            }
+          />
+          <Route
+            path="/profile"
+            element={
               <ProtectedRoute>
-                <Navigation />
-                <ResourcesPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Navigation />
                 <ProfilePage />
               </ProtectedRoute>
-            } />
+            }
+          />
 
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export { App };

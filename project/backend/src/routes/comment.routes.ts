@@ -1,17 +1,15 @@
 import { Router } from 'express';
 import { commentController } from '../controllers/comment.controller';
-import { authenticate } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// All comment routes require authentication
-router.use(authenticate);
+// Public routes
+router.get('/post/:postId', commentController.getComments);
 
-// Comment routes
-router.post('/posts/:postId/comments', commentController.create);
-router.put('/comments/:id', commentController.update);
-router.delete('/comments/:id', commentController.delete);
-router.post('/comments/:id/like', commentController.like);
-router.delete('/comments/:id/like', commentController.unlike);
+// Protected routes
+router.post('/post/:postId', authMiddleware, commentController.createComment);
+router.put('/:id', authMiddleware, commentController.updateComment);
+router.delete('/:id', authMiddleware, commentController.deleteComment);
 
-export default router; 
+export const commentRouter = router; 

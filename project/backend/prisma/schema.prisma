@@ -9,59 +9,60 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String    @id @default(uuid())
-  email          String    @unique
-  password       String
-  displayName    String
-  avatar         String
-  age           Int
-  category      String
-  parent_consent Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  posts         Post[]
-  comments      Comment[]
-  likes         Like[]
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  displayName String
+  age         Int
+  phone       String?
+  location    String?
+  bio         String?
+  education   String?
+  interests   String[]
+  avatar      String?
+  createdAt   DateTime  @default(now())
+  lastActive  DateTime  @updatedAt
+  posts       Post[]
+  comments    Comment[]
+  activities  Activity[]
 }
 
 model Post {
   id        String    @id @default(uuid())
+  title     String
   content   String
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String?
+  author    User?     @relation(fields: [authorId], references: [id])
+  isAnonymous Boolean @default(false)
+  anonymousId String? @unique // For tracking anonymous posts
+  comments  Comment[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  comments  Comment[]
-  likes     Like[]
 }
 
 model Comment {
   id        String   @id @default(uuid())
   content   String
-  authorId  String
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
   postId    String
-  author    User     @relation(fields: [authorId], references: [id])
   post      Post     @relation(fields: [postId], references: [id])
+  isAnonymous Boolean @default(false)
+  anonymousId String? @unique // For tracking anonymous comments
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  likes     Like[]
+  updatedAt DateTime @default(now())
 }
 
-model Like {
+model Activity {
   id        String   @id @default(uuid())
+  type      String   // e.g., "login", "profile_update", "post_created"
+  details   String?
   userId    String
-  postId    String?
-  commentId String?
   user      User     @relation(fields: [userId], references: [id])
-  post      Post?    @relation(fields: [postId], references: [id])
-  comment   Comment? @relation(fields: [commentId], references: [id])
   createdAt DateTime @default(now())
-
-  @@unique([userId, postId])
-  @@unique([userId, commentId])
 }

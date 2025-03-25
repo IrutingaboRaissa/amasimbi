@@ -1,272 +1,463 @@
-import { User, Bell, Settings, BookOpen, Award, Heart, Calendar, Edit, Camera, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { profileImages } from '@/assets/images';
+import {
+  Camera,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  Heart,
+  MessageSquare,
+  Bookmark,
+  Settings
+} from 'lucide-react';
+
+interface ProfileData {
+  displayName: string;
+  email: string;
+  phone: string;
+  location: string;
+  bio: string;
+  education: string;
+  interests: string[];
+  avatar: string;
+}
 
 export function ProfilePage() {
-  const achievements = [
-    { title: "Quick Learner", description: "Completed 5 courses in first month", icon: BookOpen },
-    { title: "Active Participant", description: "Posted 20+ times in community", icon: Heart },
-    { title: "Wellness Champion", description: "Completed all health modules", icon: Award }
-  ];
+  const { user, updateProfile } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<ProfileData>({
+    displayName: user?.displayName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    bio: user?.bio || '',
+    education: user?.education || '',
+    interests: user?.interests || [],
+    avatar: user?.avatar || profileImages.defaultAvatar
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [newInterest, setNewInterest] = useState('');
 
-  const upcomingEvents = [
-    { title: "Women's Health Workshop", date: "March 15, 2024", time: "2:00 PM" },
-    { title: "Mindfulness Session", date: "March 18, 2024", time: "10:00 AM" },
-    { title: "Community Meetup", date: "March 20, 2024", time: "3:30 PM" }
-  ];
-
-  const courses = [
-    {
-      title: "Understanding Puberty",
-      progress: 60,
-      totalModules: 10,
-      completedModules: 6,
-      lastAccessed: "2 days ago"
-    },
-    {
-      title: "Menstrual Health",
-      progress: 30,
-      totalModules: 8,
-      completedModules: 3,
-      lastAccessed: "1 week ago"
-    },
-    {
-      title: "Mental Wellness",
-      progress: 80,
-      totalModules: 12,
-      completedModules: 10,
-      lastAccessed: "Yesterday"
+  // Load user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        displayName: user.displayName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        bio: user.bio || '',
+        education: user.education || '',
+        interests: user.interests || [],
+        avatar: user.avatar || profileImages.defaultAvatar
+      });
     }
-  ];
+  }, [user]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileData(prev => ({
+          ...prev,
+          avatar: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddInterest = () => {
+    if (newInterest && !profileData.interests.includes(newInterest)) {
+      setProfileData(prev => ({
+        ...prev,
+        interests: [...prev.interests, newInterest]
+      }));
+      setNewInterest('');
+    }
+  };
+
+  const handleRemoveInterest = (interest: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      interests: prev.interests.filter(i => i !== interest)
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Validate required fields
+      if (!profileData.displayName.trim()) {
+        throw new Error('Display name is required');
+      }
+
+      if (!profileData.email.trim()) {
+        throw new Error('Email is required');
+      }
+
+      // Update profile using AuthContext
+      await updateProfile({
+        displayName: profileData.displayName,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio,
+        education: profileData.education,
+        interests: profileData.interests,
+        avatar: profileData.avatar
+      });
+
+      setIsEditing(false);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset form data to current user data
+    if (user) {
+      setProfileData({
+        displayName: user.displayName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        bio: user.bio || '',
+        education: user.education || '',
+        interests: user.interests || [],
+        avatar: user.avatar || profileImages.defaultAvatar
+      });
+    }
+    setIsEditing(false);
+    setError(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
-      <header className="bg-purple-100 py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-purple-200">
-                <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop"
-                  alt="Sarah Johnson"
-                  className="w-full h-full object-cover"
-                />
-                <button className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera className="text-white" size={24} />
-                </button>
-              </div>
-              <button className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                <Edit size={16} />
-              </button>
-            </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-4xl font-bold text-purple-900 mb-2">Sarah Johnson</h1>
-              <p className="text-purple-700 mb-4">Member since January 2024</p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Settings size={18} className="mr-2" />
-                  Edit Profile
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Bell size={18} className="mr-2" />
-                  Notifications
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white text-red-600 hover:text-red-700">
-                  <LogOut size={18} className="mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto py-12 px-4">
-        <div className="grid gap-8 md:grid-cols-3">
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Quick Stats</h2>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <BookOpen size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">3 Courses</h3>
-                    <p className="text-sm text-gray-600">In Progress</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <Award size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">5 Achievements</h3>
-                    <p className="text-sm text-gray-600">Unlocked</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                    <Heart size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">20+ Posts</h3>
-                    <p className="text-sm text-gray-600">In Community</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Upcoming Events */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Upcoming Events</h2>
-              <div className="space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex gap-4 p-3 rounded-xl hover:bg-purple-50 transition-colors cursor-pointer">
-                    <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
-                      <Calendar size={20} />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{event.title}</h3>
-                      <p className="text-sm text-gray-600">{event.date} at {event.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full mt-4">View All Events</Button>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-8">
-            {/* Learning Progress */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Learning Progress</h2>
-              <div className="space-y-6">
-                {courses.map((course, index) => (
-                  <div key={index} className="bg-purple-50/50 rounded-xl p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium text-purple-900">{course.title}</h3>
-                        <p className="text-sm text-purple-600">
-                          {course.completedModules} of {course.totalModules} modules completed
-                        </p>
-                      </div>
-                      <span className="text-sm text-gray-500">Last accessed {course.lastAccessed}</span>
-                    </div>
-                    <div className="relative pt-2">
-                      <div className="w-full bg-purple-100 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${course.progress}%` }}
-                        />
-                      </div>
-                      <span className="absolute right-0 top-0 text-sm font-medium text-purple-600">
-                        {course.progress}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button className="w-full mt-6">Continue Learning</Button>
-            </div>
-
-            {/* Achievements */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Recent Achievements</h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                {achievements.map((achievement, index) => {
-                  const Icon = achievement.icon;
-                  return (
-                    <div key={index} className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center">
-                      <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white flex items-center justify-center text-purple-600 shadow-sm">
-                        <Icon size={24} />
-                      </div>
-                      <h3 className="font-medium text-purple-900 mb-1">{achievement.title}</h3>
-                      <p className="text-sm text-purple-600">{achievement.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Account Settings */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <h2 className="text-xl font-semibold text-purple-900 mb-6">Account Settings</h2>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Email</label>
+      {/* Profile Header */}
+      <div className="relative h-[300px] bg-purple-900">
+        <div className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${profileImages.achievements})` }}
+        />
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-end pb-8">
+          <div className="flex items-end gap-6">
+            <div className="relative">
+              <img
+                src={profileData.avatar}
+                alt={profileData.displayName}
+                className="w-32 h-32 rounded-full border-4 border-white object-cover"
+              />
+              {isEditing && (
+                <label className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full cursor-pointer hover:bg-purple-700">
+                  <Camera className="w-4 h-4 text-white" />
                   <input
-                    type="email"
-                    className="w-full px-4 py-2 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300"
-                    value="sarah.johnson@example.com"
-                    readOnly
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
                   />
+                </label>
+              )}
+            </div>
+            <div className="text-white">
+              <h1 className="text-3xl font-bold mb-2">{profileData.displayName}</h1>
+              <p className="text-purple-200">{profileData.email}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-purple-900">Profile Information</h2>
+                {!isEditing ? (
+                  <Button onClick={() => setIsEditing(true)}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSave}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 border-t-2 border-b-2 border-current rounded-full animate-spin mr-2"></div>
+                          Saving...
+                        </div>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Display Name
+                    </label>
+                    {isEditing ? (
+                      <Input
+                        value={profileData.displayName}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
+                        icon={<User className="w-4 h-4" />}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-900">
+                        <User className="w-4 h-4" />
+                        {profileData.displayName}
+                  </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    {isEditing ? (
+                      <Input
+                        value={profileData.email}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                        icon={<Mail className="w-4 h-4" />}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-900">
+                        <Mail className="w-4 h-4" />
+                        {profileData.email}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone
+                    </label>
+                    {isEditing ? (
+                      <Input
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                        icon={<Phone className="w-4 h-4" />}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-900">
+                        <Phone className="w-4 h-4" />
+                        {profileData.phone || 'Not provided'}
+                </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Location
+                    </label>
+                    {isEditing ? (
+                      <Input
+                        value={profileData.location}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
+                        icon={<MapPin className="w-4 h-4" />}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-900">
+                        <MapPin className="w-4 h-4" />
+                        {profileData.location || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bio
+                  </label>
+                  {isEditing ? (
+                    <Textarea
+                      value={profileData.bio}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                      rows={4}
+                      placeholder="Tell us about yourself..."
+                    />
+                  ) : (
+                    <p className="text-gray-900">{profileData.bio || 'No bio provided'}</p>
+                  )}
+            </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Education
+                  </label>
+                  {isEditing ? (
+                    <Input
+                      value={profileData.education}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, education: e.target.value }))}
+                      icon={<GraduationCap className="w-4 h-4" />}
+                      placeholder="Your current education level"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 text-gray-900">
+                      <GraduationCap className="w-4 h-4" />
+                      {profileData.education || 'Not provided'}
+                    </div>
+                  )}
+                </div>
+
+                    <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Interests
+                  </label>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          value={newInterest}
+                          onChange={(e) => setNewInterest(e.target.value)}
+                          placeholder="Add an interest"
+                        />
+                        <Button onClick={handleAddInterest}>Add</Button>
+                    </div>
+                      <div className="flex flex-wrap gap-2">
+                        {profileData.interests.map((interest) => (
+                          <div
+                            key={interest}
+                            className="flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full"
+                          >
+                            {interest}
+                            <button
+                              onClick={() => handleRemoveInterest(interest)}
+                              className="text-purple-700 hover:text-purple-900"
+                            >
+                              ×
+                            </button>
+                  </div>
+                ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {profileData.interests.length > 0 ? (
+                        profileData.interests.map((interest) => (
+                          <div
+                            key={interest}
+                            className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full"
+                          >
+                            {interest}
+                      </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No interests added yet</p>
+                      )}
+                    </div>
+                  )}
+                  </div>
+              </div>
+            </div>
+
+            {/* Activity Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <Heart className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="text-2xl font-bold text-purple-900">24</h3>
+                <p className="text-gray-600">Likes Received</p>
+                      </div>
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <MessageSquare className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="text-2xl font-bold text-purple-900">12</h3>
+                <p className="text-gray-600">Comments Made</p>
+                    </div>
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <Bookmark className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="text-2xl font-bold text-purple-900">8</h3>
+                <p className="text-gray-600">Saved Items</p>
+              </div>
+              </div>
+            </div>
+
+          {/* Sidebar */}
+                <div>
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-bold text-purple-900 mb-4">Achievements</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Language</label>
-                  <select className="w-full px-4 py-2 rounded-xl border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300">
-                    <option>English</option>
-                    <option>Kinywarwanda</option>
-                  </select>
+                    <h3 className="font-semibold text-gray-900">Course Completion</h3>
+                    <p className="text-sm text-gray-600">Completed 5 courses</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Briefcase className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-purple-900 mb-2">Notifications</label>
-                  <div className="space-y-3">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Email notifications</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Community updates</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                        defaultChecked
-                      />
-                      <span className="ml-2 text-gray-700">Event reminders</span>
-                    </label>
+                    <h3 className="font-semibold text-gray-900">Career Milestone</h3>
+                    <p className="text-sm text-gray-600">Created first portfolio</p>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4 mt-6">
-                <Button className="flex-1">Save Changes</Button>
-                <Button variant="outline" className="flex-1">Reset</Button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-purple-900 mb-4">Recent Activity</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-900">Commented on "Study Tips"</p>
+                    <p className="text-xs text-gray-500">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-900">Liked "Career Planning"</p>
+                    <p className="text-xs text-gray-500">5 hours ago</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-
-      <footer className="bg-purple-50 py-12 text-center text-gray-600 mt-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto mb-8">
-            <h3 className="text-2xl font-semibold text-purple-900 mb-4">Need Help?</h3>
-            <p className="text-purple-700 mb-6">Our support team is here to assist you with any questions or concerns</p>
-            <Button variant="outline" className="bg-white hover:bg-purple-50">Contact Support</Button>
-          </div>
-          <nav className="mb-4">
-            <a href="#" className="mr-6 hover:text-purple-600">About Us</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Contact</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-600">Terms of Service</a>
-          </nav>
-          <p className="text-sm text-purple-700">&copy; 2024 AMASIMBI. All rights reserved.</p>
         </div>
-      </footer>
     </div>
   );
 } 
