@@ -7,8 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { login, error } = useAuth();
   const navigate = useNavigate();
@@ -16,12 +19,43 @@ export function LoginPage() {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(formData.email, formData.password);
       navigate(from, { replace: true });
     } catch (err) {
       // Error is handled by AuthContext
@@ -68,12 +102,15 @@ export function LoginPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`pl-10 ${formErrors.email ? 'border-red-500' : ''}`}
                   placeholder="Enter your email"
                 />
               </div>
+              {formErrors.email && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+              )}
             </div>
 
             <div>
@@ -90,12 +127,15 @@ export function LoginPage() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`pl-10 ${formErrors.password ? 'border-red-500' : ''}`}
                   placeholder="Enter your password"
                 />
               </div>
+              {formErrors.password && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
+              )}
             </div>
           </div>
 
@@ -125,7 +165,7 @@ export function LoginPage() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
                 Signing in...
               </div>

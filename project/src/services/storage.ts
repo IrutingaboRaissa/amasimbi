@@ -1,22 +1,55 @@
 import { User, Post, Comment } from '@/types';
 
+const STORAGE_KEYS = {
+  USER: 'user',
+  POSTS: 'posts',
+  COMMENTS: 'comments',
+  ACTIVITIES: 'activities'
+} as const;
+
+// Helper function to safely access localStorage
+const safeStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Error setting localStorage:', error);
+    }
+  },
+  removeItem: (key: string): void => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Error removing from localStorage:', error);
+    }
+  }
+};
+
 // User data storage
 export const saveUserData = (user: User) => {
-  localStorage.setItem('user', JSON.stringify(user));
+  safeStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 };
 
 export const getUserData = (): User | null => {
-  const userData = localStorage.getItem('user');
+  const userData = safeStorage.getItem(STORAGE_KEYS.USER);
   return userData ? JSON.parse(userData) : null;
 };
 
 // Posts storage
 export const savePosts = (posts: Post[]) => {
-  localStorage.setItem('posts', JSON.stringify(posts));
+  safeStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
 };
 
 export const getPosts = (): Post[] => {
-  const posts = localStorage.getItem('posts');
+  const posts = safeStorage.getItem(STORAGE_KEYS.POSTS);
   return posts ? JSON.parse(posts) : [];
 };
 
@@ -29,11 +62,11 @@ export const addPost = (post: Post) => {
 
 // Comments storage
 export const saveComments = (postId: string, comments: Comment[]) => {
-  localStorage.setItem(`comments_${postId}`, JSON.stringify(comments));
+  safeStorage.setItem(`${STORAGE_KEYS.COMMENTS}_${postId}`, JSON.stringify(comments));
 };
 
 export const getComments = (postId: string): Comment[] => {
-  const comments = localStorage.getItem(`comments_${postId}`);
+  const comments = safeStorage.getItem(`${STORAGE_KEYS.COMMENTS}_${postId}`);
   return comments ? JSON.parse(comments) : [];
 };
 
@@ -48,10 +81,10 @@ export const addComment = (postId: string, comment: Comment) => {
 export const saveUserActivity = (userId: string, activity: any) => {
   const activities = getUserActivities(userId);
   activities.unshift(activity);
-  localStorage.setItem(`activities_${userId}`, JSON.stringify(activities));
+  safeStorage.setItem(`${STORAGE_KEYS.ACTIVITIES}_${userId}`, JSON.stringify(activities));
 };
 
 export const getUserActivities = (userId: string): any[] => {
-  const activities = localStorage.getItem(`activities_${userId}`);
+  const activities = safeStorage.getItem(`${STORAGE_KEYS.ACTIVITIES}_${userId}`);
   return activities ? JSON.parse(activities) : [];
 }; 

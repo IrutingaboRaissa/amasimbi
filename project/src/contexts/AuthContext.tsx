@@ -1,14 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface User {
-  id: string;
-  displayName: string;
-  email: string;
-  age?: number;
-  category?: string;
-  avatar?: string;
-}
+import { saveUserData, getUserData } from '@/services/storage';
+import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +16,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock user database
+const mockUsers: Record<string, { user: User; password: string }> = {
+  'test@example.com': {
+    user: {
+      id: '1',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      age: 18,
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString()
+    },
+    password: 'password123'
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,22 +38,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
+    // Load user data from storage on mount
+    const loadUser = () => {
       try {
-        // TODO: Implement actual session check
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        const userData = getUserData();
+        if (userData) {
+          setUser(userData);
         }
-      } catch (err) {
-        setError('Failed to check authentication status');
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        localStorage.removeItem('user');
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    loadUser();
   }, []);
 
   const isAgeEligible = (age: number): boolean => {
@@ -57,20 +65,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      // TODO: Implement actual login API call
-      const mockUser: User = {
-        id: '1',
-        displayName: 'Test User',
-        email,
-        age: 18
-      };
+      if (!email.trim()) {
+        throw new Error('Email is required');
+      }
+      
+      if (!password) {
+        throw new Error('Password is required');
+      }
 
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const mockUser = mockUsers[email];
+      if (!mockUser) {
+        throw new Error('Account not found. Please check your email');
+      }
+
+      if (mockUser.password !== password) {
+        throw new Error('Invalid password');
+      }
+      
+      setUser(mockUser.user);
+      saveUserData(mockUser.user);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to login. Please check your credentials.');
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to login. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -81,24 +102,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      if (!isAgeEligible(age)) {
-        throw new Error('You must be between 12 and 25 years old to register.');
+      if (!email.trim()) {
+        throw new Error('Email is required');
+      }
+      
+      if (!password) {
+        throw new Error('Password is required');
+      }
+      
+      if (!displayName.trim()) {
+        throw new Error('Display name is required');
       }
 
-      // TODO: Implement actual registration API call
-      const mockUser: User = {
-        id: '1',
-        displayName,
+      if (!isAgeEligible(age)) {
+        throw new Error('You must be between 12 and 25 years old to register');
+      }
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (mockUsers[email]) {
+        throw new Error('An account with this email already exists');
+      }
+
+      const newUser: User = {
+        id: Math.random().toString(36).substr(2, 9),
         email,
-        age
+        displayName,
+        age,
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString()
       };
 
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      mockUsers[email] = {
+        user: newUser,
+        password
+      };
+
+      setUser(newUser);
+      saveUserData(newUser);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to register. Please try again.');
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to register. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,13 +156,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      // TODO: Implement actual logout API call
-      setUser(null);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Clear local storage
       localStorage.removeItem('user');
+      
+      setUser(null);
       navigate('/');
     } catch (err) {
-      setError('Failed to logout. Please try again.');
-      throw err;
+      const errorMessage = 'Failed to logout. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -126,21 +178,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      if (data.age && !isAgeEligible(data.age)) {
-        throw new Error('You must be between 12 and 25 years old to use this platform.');
+      if (!user) {
+        throw new Error('No user logged in');
       }
 
-      // TODO: Implement actual profile update API call
-      const updatedUser = { ...user, ...data };
+      // Update user data
+      const updatedUser = {
+        ...user,
+        ...data,
+        lastActive: new Date().toISOString()
+      };
+
+      // Update context and storage
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      saveUserData(updatedUser);
+
+      // Update mock database
+      mockUsers[user.email] = {
+        ...mockUsers[user.email],
+        user: updatedUser
+      };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile. Please try again.');
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider

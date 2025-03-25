@@ -1,149 +1,157 @@
 import { motion } from 'framer-motion';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Heart, Users, BookOpen, Shield, ArrowRight } from 'lucide-react';
+import { homeImages } from '@/assets/images';
+import {
+  Target,
+  Heart,
+  Users,
+  Shield,
+  GraduationCap,
+  MessageCircle,
+  Globe,
+  Award
+} from 'lucide-react';
+
+const missionPoints = [
+  {
+    icon: Target,
+    title: 'Our Mission',
+    description: 'To empower young women in Rwanda with knowledge and support to make informed decisions about their reproductive health while respecting cultural values.'
+  },
+  {
+    icon: Heart,
+    title: 'Our Vision',
+    description: 'A Rwanda where every young woman has access to accurate reproductive health information and support, leading to healthier communities.'
+  },
+  {
+    icon: Users,
+    title: 'Our Impact',
+    description: 'We aim to reduce early pregnancies and improve educational outcomes for young women through education and mentorship.'
+  }
+];
+
+const values = [
+  {
+    icon: Shield,
+    title: 'Safety & Privacy',
+    description: 'We prioritize the safety and privacy of our users, ensuring a secure environment for learning and sharing.'
+  },
+  {
+    icon: GraduationCap,
+    title: 'Education',
+    description: 'We believe in the power of education to empower young women to make informed decisions.'
+  },
+  {
+    icon: MessageCircle,
+    title: 'Open Dialogue',
+    description: 'We promote open and respectful dialogue about reproductive health within cultural contexts.'
+  },
+  {
+    icon: Globe,
+    title: 'Cultural Sensitivity',
+    description: 'We respect and incorporate cultural values while providing essential health information.'
+  }
+];
+
+const team = [
+  {
+    name: 'Dr. Marie Uwimana',
+    role: 'Founder & Medical Director',
+    image: homeImages.testimonial1,
+    bio: 'A healthcare professional with over 15 years of experience in reproductive health education.'
+  },
+  {
+    name: 'Sarah Mukamana',
+    role: 'Community Engagement Lead',
+    image: homeImages.testimonial2,
+    bio: 'Passionate about creating safe spaces for young women to learn and grow.'
+  },
+  {
+    name: 'Dr. Jean Pierre',
+    role: 'Health Education Specialist',
+    image: homeImages.testimonial3,
+    bio: 'Expert in developing culturally sensitive health education programs.'
+  }
+];
 
 export function AboutPage() {
-  const teamMembers = [
-    {
-      name: "Dr. Sarah Williams",
-      role: "Medical Director",
-      image: "src/assets/images/team/sarah.jpg",
-      description: "Specializes in adolescent reproductive health with over 15 years of experience."
-    },
-    {
-      name: "Emily Chen",
-      role: "Education Coordinator",
-      image: "src/assets/images/team/emily.jpg",
-      description: "Passionate about creating accessible health education programs for young women."
-    },
-    {
-      name: "Dr. Maria Rodriguez",
-      role: "Health Advisor",
-      image: "src/assets/images/team/maria.jpg",
-      description: "Expert in women's health and reproductive medicine."
-    }
-  ];
-
-  const values = [
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Safety First",
-      description: "We prioritize creating a safe, confidential environment for learning and sharing."
-    },
-    {
-      icon: <Heart className="w-6 h-6" />,
-      title: "Empathy & Support",
-      description: "Our approach is rooted in understanding and supporting each individual's journey."
-    },
-    {
-      icon: <BookOpen className="w-6 h-6" />,
-      title: "Quality Education",
-      description: "We provide accurate, research-based information tailored for young women."
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Community",
-      description: "Building a supportive network of peers and mentors for shared growth."
-    }
-  ];
-
   return (
-    <div className="min-h-screen">
+    <div className="space-y-16">
       {/* Hero Section */}
-      <section className="bg-purple-100 py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
+      <section className="relative h-[400px] flex items-center justify-center text-white">
+        <div className="absolute inset-0">
+          <img
+            src={homeImages.hero}
+            alt="About Amasimbi"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-4">
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center max-w-3xl mx-auto"
+            className="text-4xl md:text-5xl font-bold mb-6"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-purple-900 mb-6">
-              About Amasimbi
-            </h1>
-            <p className="text-lg text-purple-700 mb-8">
-              Empowering young women through accessible, comprehensive reproductive health education
-              and community support.
-            </p>
-          </motion.div>
+            About Amasimbi
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl"
+          >
+            Empowering young women in Rwanda through education and support
+          </motion.p>
         </div>
       </section>
 
       {/* Mission Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section className="container mx-auto px-4">
+        <div className="grid md:grid-cols-3 gap-8">
+          {missionPoints.map((point, index) => (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+              key={point.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
             >
-              <h2 className="text-3xl font-bold text-purple-900 mb-6">Our Mission</h2>
-              <p className="text-lg text-purple-700 mb-6">
-                Amasimbi is dedicated to addressing the critical issue of early pregnancies in Rwanda
-                by providing accessible, culturally sensitive reproductive health education. We focus
-                on empowering young women aged 12-25 who may lack access to comprehensive reproductive
-                health information due to cultural taboos and limited parent-child communication.
-              </p>
-              <p className="text-lg text-purple-700 mb-6">
-                Through our platform, we aim to bridge the knowledge gap by providing research-based
-                information, real-life testimonies, and age-appropriate details about reproductive
-                health, enabling young women to make informed decisions about their health and future.
-              </p>
-              <Link to="/register">
-                <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
-                  Join Our Mission
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                    <point.icon className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <CardTitle>{point.title}</CardTitle>
+                  <CardDescription>{point.description}</CardDescription>
+                </CardHeader>
+              </Card>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-2xl overflow-hidden">
-                <img
-                  src="src/assets/images/mission-image.jpg"
-                  alt="Young women in a learning session"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </motion.div>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* Values Section */}
-      <section className="py-20 bg-purple-50">
+      <section className="bg-purple-50 py-16">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center max-w-3xl mx-auto mb-12"
-          >
-            <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Values</h2>
-            <p className="text-lg text-purple-700">
-              The principles that guide our work and commitment to empowering young women
-            </p>
-          </motion.div>
+          <h2 className="text-3xl font-bold text-center mb-12">Our Values</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <motion.div
-                key={index}
+                key={value.title}
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white p-6 rounded-xl shadow-lg"
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
               >
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 mb-4">
-                  {value.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-purple-900 mb-2">{value.title}</h3>
-                <p className="text-purple-700">{value.description}</p>
+                <Card className="h-full">
+                  <CardHeader>
+                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                      <value.icon className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <CardTitle>{value.title}</CardTitle>
+                    <CardDescription>{value.description}</CardDescription>
+                  </CardHeader>
+                </Card>
               </motion.div>
             ))}
           </div>
@@ -151,76 +159,47 @@ export function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center max-w-3xl mx-auto mb-12"
-          >
-            <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Team</h2>
-            <p className="text-lg text-purple-700">
-              Meet the dedicated professionals working to make reproductive health education
-              accessible to all young women
-            </p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {teamMembers.map((member, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl shadow-lg overflow-hidden"
-              >
-                <div className="aspect-[4/3] relative">
+      <section className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          {team.map((member, index) => (
+            <motion.div
+              key={member.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
+            >
+              <Card className="h-full">
+                <div className="relative h-48">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-t-lg"
                   />
                 </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-purple-900 mb-1">{member.name}</h3>
-                  <p className="text-purple-600 mb-3">{member.role}</p>
-                  <p className="text-purple-700">{member.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                <CardHeader>
+                  <CardTitle>{member.name}</CardTitle>
+                  <CardDescription>{member.role}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">{member.bio}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-purple-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <h2 className="text-3xl font-bold text-purple-900 mb-6">
-              Join Us in Making a Difference
-            </h2>
-            <p className="text-lg text-purple-700 mb-8">
-              Be part of our mission to empower young women through education and community support
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Link to="/register">
-                <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button size="lg" variant="outline">
-                  Contact Us
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+      <section className="bg-purple-600 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">Join Our Mission</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Help us create a better future for young women in Rwanda by supporting our educational initiatives.
+          </p>
+          <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
+            Get Involved
+          </Button>
         </div>
       </section>
     </div>

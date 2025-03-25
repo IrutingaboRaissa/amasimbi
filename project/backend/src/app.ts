@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config';
 import { authRouter } from './routes/auth';
-import { postRouter } from './routes/post.routes';
+import postRouter from './routes/post.routes';
 import { commentRouter } from './routes/comment.routes';
 import { likeRouter } from './routes/like.routes';
 
@@ -26,6 +26,12 @@ app.use('/api/likes', likeRouter);
 // Health check route
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
 export { app }; 

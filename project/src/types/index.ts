@@ -1,9 +1,14 @@
 export interface User {
   id: string;
-  displayName: string;
   email: string;
+  displayName: string;
   age: number;
   avatar?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  education?: string;
+  interests?: string[];
   createdAt: string;
   lastActive: string;
 }

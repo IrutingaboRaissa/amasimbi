@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { homeImages } from '@/assets/images';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   BookOpen,
   Users,
@@ -16,19 +17,19 @@ const features = [
     icon: <BookOpen className="w-8 h-8" />,
     title: 'Interactive Learning',
     description: 'Engage with dynamic content and real-world projects',
-    image: homeImages.features.education
+    image: homeImages.feature1
   },
   {
     icon: <Users className="w-8 h-8" />,
     title: 'Community Support',
     description: 'Connect with peers and mentors in a supportive environment',
-    image: homeImages.features.community
+    image: homeImages.feature2
   },
   {
     icon: <BookMarked className="w-8 h-8" />,
     title: 'Rich Resources',
     description: 'Access a vast library of educational materials and tools',
-    image: homeImages.features.resources
+    image: homeImages.feature3
   }
 ];
 
@@ -37,19 +38,19 @@ const testimonials = [
     name: 'Sarah Johnson',
     role: 'High School Student',
     content: 'Amasimbi has transformed my learning experience. The interactive courses and supportive community have helped me excel in my studies.',
-    image: homeImages.testimonials.student1
+    image: homeImages.testimonial1
   },
   {
     name: 'Michael Chen',
     role: 'College Student',
     content: 'The platform\'s focus on practical skills and real-world applications has been invaluable for my career preparation.',
-    image: homeImages.testimonials.student2
+    image: homeImages.testimonial2
   },
   {
     name: 'Emma Rodriguez',
     role: 'Young Professional',
     content: 'I love how Amasimbi combines education with community. It\'s more than just learning - it\'s growing together.',
-    image: homeImages.testimonials.student3
+    image: homeImages.testimonial3
   }
 ];
 
@@ -63,6 +64,8 @@ const benefits = [
 ];
 
 export function HomePage() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -87,21 +90,24 @@ export function HomePage() {
               Join our community of learners aged 12-25 and discover a world of opportunities through interactive learning and supportive connections.
             </p>
             <div className="flex gap-4">
-              <Link to="/register">
-                <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
-                  Get Started <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-              <Link to="/about">
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-purple-600">
-                  Learn More
-                </Button>
-              </Link>
+              {user ? (
+                <Link to="/dashboard">
+                  <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                    Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/register">
+                  <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                    Get Started <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>
       </div>
-
+     
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -170,7 +176,7 @@ export function HomePage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-purple-900 mb-4">What Our Users Say</h2>
+            <h2 className="text-3xl font-bold text-purple-900 mb-4">What Users Say</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Hear from our community members about their experiences with Amasimbi.
             </p>
@@ -222,14 +228,22 @@ export function HomePage() {
             <p className="text-lg mb-8 max-w-2xl mx-auto">
               Join our community of learners and discover a world of opportunities through interactive learning and supportive connections.
             </p>
-            <Link to="/register">
-              <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
-                Get Started Now <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/dashboard">
+                <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                  Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/register">
+                <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                  Get Started Today <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            )}
           </motion.div>
         </div>
       </section>
     </div>
   );
-} 
+}

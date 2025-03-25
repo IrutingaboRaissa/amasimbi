@@ -3,7 +3,67 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { homeImages } from '@/assets/images';
+import {
+  Mail,
+  Phone,
+  MapPin,
+  MessageSquare,
+  Clock,
+  Globe,
+  Facebook,
+  Twitter,
+  Instagram
+} from 'lucide-react';
+
+const contactInfo = [
+  {
+    icon: Mail,
+    title: 'Email',
+    content: 'contact@amasimbi.rw',
+    link: 'mailto:contact@amasimbi.rw'
+  },
+  {
+    icon: Phone,
+    title: 'Phone',
+    content: '+250 788 123 456',
+    link: 'tel:+250788123456'
+  },
+  {
+    icon: MapPin,
+    title: 'Address',
+    content: 'KG 123 Street, Kigali, Rwanda',
+    link: 'https://maps.google.com'
+  }
+];
+
+const socialLinks = [
+  {
+    icon: Facebook,
+    name: 'Facebook',
+    url: 'https://facebook.com/amasimbi',
+    color: 'text-blue-600'
+  },
+  {
+    icon: Twitter,
+    name: 'Twitter',
+    url: 'https://twitter.com/amasimbi',
+    color: 'text-blue-400'
+  },
+  {
+    icon: Instagram,
+    name: 'Instagram',
+    url: 'https://instagram.com/amasimbi',
+    color: 'text-pink-600'
+  }
+];
+
+const businessHours = [
+  { day: 'Monday - Friday', hours: '9:00 AM - 6:00 PM' },
+  { day: 'Saturday', hours: '10:00 AM - 4:00 PM' },
+  { day: 'Sunday', hours: 'Closed' }
+];
 
 export function ContactPage() {
   const [formData, setFormData] = useState({
@@ -47,215 +107,219 @@ export function ContactPage() {
     }
   };
 
-  const contactInfo = [
-    {
-      icon: <Mail className="w-5 h-5" />,
-      title: "Email",
-      details: "support@amasimbi.com",
-      link: "mailto:support@amasimbi.com"
-    },
-    {
-      icon: <Phone className="w-5 h-5" />,
-      title: "Phone",
-      details: "+250 788 123 456",
-      link: "tel:+250788123456"
-    },
-    {
-      icon: <MapPin className="w-5 h-5" />,
-      title: "Address",
-      details: "Kigali, Rwanda",
-      link: "https://maps.google.com"
-    },
-    {
-      icon: <Clock className="w-5 h-5" />,
-      title: "Hours",
-      details: "Mon-Fri: 9AM - 5PM",
-      link: null
-    }
-  ];
-
   return (
-    <div className="min-h-screen">
+    <div className="space-y-16">
       {/* Hero Section */}
-      <section className="bg-purple-100 py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
+      <section className="relative h-[400px] flex items-center justify-center text-white">
+        <div className="absolute inset-0">
+          <img
+            src={homeImages.hero}
+            alt="Contact Us"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-4">
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center max-w-3xl mx-auto"
+            className="text-4xl md:text-5xl font-bold mb-6"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-purple-900 mb-6">
-              Contact Us
-            </h1>
-            <p className="text-lg text-purple-700">
-              Have questions or need support? We're here to help you on your journey.
-            </p>
-          </motion.div>
+            Contact Us
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl"
+          >
+            Get in touch with us for any questions or support
+          </motion.p>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Information */}
+      {/* Contact Information */}
+      <section className="container mx-auto px-4">
+        <div className="grid md:grid-cols-3 gap-8">
+          {contactInfo.map((info, index) => (
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="lg:col-span-1 space-y-8"
+              key={info.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
             >
-              <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-purple-900 mb-6">
-                  Get in Touch
-                </h2>
-                <div className="space-y-6">
-                  {contactInfo.map((info, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      {info.link ? (
-                        <a
-                          href={info.link}
-                          target={info.link.startsWith('http') ? '_blank' : undefined}
-                          rel={info.link.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          className="flex items-start group"
-                        >
-                          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-200 transition-colors">
-                            {info.icon}
-                          </div>
-                          <div className="ml-4">
-                            <h3 className="text-sm font-medium text-purple-900">{info.title}</h3>
-                            <p className="text-purple-700 group-hover:text-purple-900 transition-colors">
-                              {info.details}
-                            </p>
-                          </div>
-                        </a>
-                      ) : (
-                        <div className="flex items-start">
-                          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
-                            {info.icon}
-                          </div>
-                          <div className="ml-4">
-                            <h3 className="text-sm font-medium text-purple-900">{info.title}</h3>
-                            <p className="text-purple-700">{info.details}</p>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Contact Form */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="lg:col-span-2"
-            >
-              <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-purple-900 mb-6">
-                  Send Us a Message
-                </h2>
-                {success ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-50 text-green-900 p-4 rounded-lg flex items-center gap-2 mb-6"
-                  >
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <p>Thank you for your message. We'll get back to you soon!</p>
-                  </motion.div>
-                ) : null}
-                {error ? (
-                  <div className="bg-red-50 text-red-900 p-4 rounded-lg mb-6">
-                    {error}
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                    <info.icon className="w-6 h-6 text-purple-600" />
                   </div>
-                ) : null}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <CardTitle>{info.title}</CardTitle>
+                  <CardDescription>
+                    <a href={info.link} className="hover:text-purple-600">
+                      {info.content}
+                    </a>
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Contact Form and Business Hours */}
+      <section className="container mx-auto px-4">
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Contact Form */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Send us a Message</CardTitle>
+                <CardDescription>
+                  Fill out the form below and we'll get back to you as soon as possible.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-purple-900 mb-2">
-                        Name
-                      </label>
+                      <label className="block text-sm font-medium mb-1">First Name</label>
                       <Input
-                        id="name"
+                        placeholder="John"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        required
-                        className="w-full"
                       />
                     </div>
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-purple-900 mb-2">
-                        Email
-                      </label>
+                      <label className="block text-sm font-medium mb-1">Last Name</label>
                       <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
+                        placeholder="Doe"
+                        name="name"
+                        value={formData.name}
                         onChange={handleChange}
-                        required
-                        className="w-full"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-purple-900 mb-2">
-                      Subject
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Email</label>
                     <Input
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
+                      type="email"
+                      placeholder="john@example.com"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      required
-                      className="w-full"
                     />
                   </div>
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-purple-900 mb-2">
-                      Message
-                    </label>
+                    <label className="block text-sm font-medium mb-1">Subject</label>
+                    <Input
+                      placeholder="How can we help?"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Message</label>
                     <Textarea
-                      id="message"
+                      placeholder="Your message..."
+                      className="min-h-[150px]"
                       name="message"
                       value={formData.message}
                       onChange={handleChange}
-                      required
-                      className="w-full min-h-[150px]"
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Sending...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Send className="w-4 h-4" />
-                        Send Message
-                      </div>
-                    )}
-                  </Button>
+                  <Button className="w-full">Send Message</Button>
                 </form>
-              </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Business Hours and Social Links */}
+          <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                    <CardTitle>Business Hours</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {businessHours.map((schedule) => (
+                      <div key={schedule.day} className="flex justify-between">
+                        <span className="font-medium">{schedule.day}</span>
+                        <span className="text-gray-600">{schedule.hours}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-purple-600" />
+                    <CardTitle>Follow Us</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
+                    {socialLinks.map((social) => (
+                      <a
+                        key={social.name}
+                        href={social.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`hover:scale-110 transition-transform ${social.color}`}
+                      >
+                        <social.icon className="w-6 h-6" />
+                      </a>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           </div>
         </div>
+      </section>
+
+      {/* Map Section */}
+      <section className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-purple-600" />
+                <CardTitle>Find Us</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-video bg-gray-100 rounded-lg">
+                {/* Replace with actual map component */}
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  Map will be displayed here
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </section>
     </div>
   );
