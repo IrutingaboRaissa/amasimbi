@@ -16,19 +16,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database
-const mockUsers: Record<string, { user: User; password: string }> = {
-  'test@example.com': {
-    user: {
-      id: '1',
-      email: 'test@example.com',
-      displayName: 'Test User',
-      age: 18,
-      createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
-    },
-    password: 'password123'
+// Mock user database with localStorage persistence
+const getMockUsers = (): Record<string, { user: User; password: string }> => {
+  const stored = localStorage.getItem('mockUsers');
+  if (stored) {
+    return JSON.parse(stored);
   }
+  // Initialize with test user if no data exists
+  const initialUsers = {
+    'test@example.com': {
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        age: 18,
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString()
+      },
+      password: 'password123'
+    }
+  };
+  localStorage.setItem('mockUsers', JSON.stringify(initialUsers));
+  return initialUsers;
+};
+
+const saveMockUsers = (users: Record<string, { user: User; password: string }>) => {
+  localStorage.setItem('mockUsers', JSON.stringify(users));
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -76,7 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      const mockUsers = getMockUsers();
       const mockUser = mockUsers[email];
+      
       if (!mockUser) {
         throw new Error('Account not found. Please check your email');
       }
@@ -121,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      const mockUsers = getMockUsers();
       if (mockUsers[email]) {
         throw new Error('An account with this email already exists');
       }
@@ -139,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password
       };
 
+      saveMockUsers(mockUsers);
       setUser(newUser);
       saveUserData(newUser);
       navigate('/dashboard');
@@ -182,6 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('No user logged in');
       }
 
+      const mockUsers = getMockUsers();
+      
       // Validate email if it's being updated
       if (data.email && data.email !== user.email) {
         if (mockUsers[data.email]) {
@@ -216,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      // Clear any existing error
+      saveMockUsers(mockUsers);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
