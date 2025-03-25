@@ -182,6 +182,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('No user logged in');
       }
 
+      // Validate email if it's being updated
+      if (data.email && data.email !== user.email) {
+        if (mockUsers[data.email]) {
+          throw new Error('An account with this email already exists');
+        }
+      }
+
       // Update user data
       const updatedUser = {
         ...user,
@@ -194,10 +201,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveUserData(updatedUser);
 
       // Update mock database
-      mockUsers[user.email] = {
-        ...mockUsers[user.email],
-        user: updatedUser
-      };
+      if (data.email && data.email !== user.email) {
+        // If email is changed, update the key in mockUsers
+        mockUsers[data.email] = {
+          ...mockUsers[user.email],
+          user: updatedUser
+        };
+        delete mockUsers[user.email];
+      } else {
+        // Otherwise just update the user data
+        mockUsers[user.email] = {
+          ...mockUsers[user.email],
+          user: updatedUser
+        };
+      }
+
+      // Clear any existing error
+      setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
       setError(errorMessage);

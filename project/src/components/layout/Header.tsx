@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Public navigation items
+// Public navigation items (shown when not logged in)
 const publicNavItems = [
   { name: 'Home', link: '/' },
   { name: 'About', link: '/about' },
@@ -38,24 +38,29 @@ export function Header() {
               <span className="text-2xl font-bold text-purple-600">Amasimbi</span>
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.link}
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-                >
-                  {item.name}
-                </Link>
-              ))}
-              {user && privateNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.link}
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {!user ? (
+                // Show public navigation items when not logged in
+                publicNavItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.link}
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
+                  >
+                    {item.name}
+                  </Link>
+                ))
+              ) : (
+                // Show private navigation items when logged in
+                privateNavItems.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.link}
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-purple-600"
+                  >
+                    {item.name}
+                  </Link>
+                ))
+              )}
             </div>
           </div>
           <div className="flex items-center">

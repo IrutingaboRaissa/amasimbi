@@ -89,21 +89,7 @@ export function HomePage() {
             <p className="text-xl mb-8">
               Join our community of learners aged 12-25 and discover a world of opportunities through interactive learning and supportive connections.
             </p>
-            <div className="flex gap-4">
-              {user ? (
-                <Link to="/dashboard">
-                  <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
-                    Go to Dashboard <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/register">
-                  <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
-                    Get Started <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
-              )}
-            </div>
+            
           </motion.div>
         </div>
       </div>

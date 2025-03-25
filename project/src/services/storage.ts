@@ -35,12 +35,35 @@ const safeStorage = {
 
 // User data storage
 export const saveUserData = (user: User) => {
-  safeStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  try {
+    const userData = JSON.stringify(user);
+    safeStorage.setItem(STORAGE_KEYS.USER, userData);
+    // Also save to sessionStorage for redundancy
+    sessionStorage.setItem(STORAGE_KEYS.USER, userData);
+  } catch (error) {
+    console.error('Error saving user data:', error);
+  }
 };
 
 export const getUserData = (): User | null => {
-  const userData = safeStorage.getItem(STORAGE_KEYS.USER);
-  return userData ? JSON.parse(userData) : null;
+  try {
+    // Try to get from localStorage first
+    const userData = safeStorage.getItem(STORAGE_KEYS.USER);
+    if (userData) {
+      return JSON.parse(userData);
+    }
+    
+    // If not in localStorage, try sessionStorage
+    const sessionData = sessionStorage.getItem(STORAGE_KEYS.USER);
+    if (sessionData) {
+      return JSON.parse(sessionData);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting user data:', error);
+    return null;
+  }
 };
 
 // Posts storage
