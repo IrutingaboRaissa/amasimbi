@@ -43,13 +43,13 @@ router.post('/register', validateRegistration, async (req, res) => {
     // Generate tokens
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET || 'amasimbi-super-secret-key-2024',
       { expiresIn: '24h' }
     );
 
     const refreshToken = jwt.sign(
       { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      process.env.REFRESH_TOKEN_SECRET || 'amasimbi-refresh-secret-key-2024',
       { expiresIn: '7d' }
     );
 
@@ -108,13 +108,13 @@ router.post('/login', validateLogin, async (req, res) => {
     // Generate tokens
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET || 'amasimbi-super-secret-key-2024',
       { expiresIn: '24h' }
     );
 
     const refreshToken = jwt.sign(
       { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      process.env.REFRESH_TOKEN_SECRET || 'amasimbi-refresh-secret-key-2024',
       { expiresIn: '7d' }
     );
 
@@ -170,13 +170,13 @@ router.get('/me', authenticateToken, async (req, res) => {
     // Generate new tokens
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET || 'amasimbi-super-secret-key-2024',
       { expiresIn: '24h' }
     );
 
     const refreshToken = jwt.sign(
       { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      process.env.REFRESH_TOKEN_SECRET || 'amasimbi-refresh-secret-key-2024',
       { expiresIn: '7d' }
     );
 

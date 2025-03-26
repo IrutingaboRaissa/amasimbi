@@ -40,21 +40,21 @@ const features = [
 
 const testimonials = [
   {
-    name: 'Sarah Johnson',
+    name: 'Sarah Ineza',
     role: 'High School Student',
-    content: 'Amasimbi has transformed my learning experience. The interactive courses and supportive community have helped me excel in my studies.',
+    content: 'Amasimbi is  teaching young women what they need to know about health and life, including what they parents didn\' get the courage to tell them.',
     image: homeImages.testimonial1
   },
   {
-    name: 'Emma Rodriguez',
-    role: 'Young Professional',
+    name: 'Emma Ishimwe',
+    role: 'College Student',
     content: 'I love how Amasimbi combines education with community. It\'s more than just learning - it\'s growing together.',
     image: homeImages.testimonial2
   },
   {
     name: 'Lisa Mutoni',
     role: 'College Student',
-    content: 'The platform\'s focus on practical skills and real-world applications has been invaluable for my personal growth.',
+    content: 'The platform\'s focus on my personal growth and health .',
     image: homeImages.testimonial3
   }
 ];
@@ -133,11 +133,6 @@ export function HomePage() {
                       Get Started <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </Link>
-                  <Link to="/about">
-                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
-                      Learn More
-                    </Button>
-                  </Link>
                 </>
               )}
             </div>
@@ -151,7 +146,7 @@ export function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-purple-900 mb-4">Why Choose Amasimbi?</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              We provide a comprehensive learning platform designed specifically for young learners, combining education with community support.
+              Amasimbi focuses on equiping young women with the knowledge and skills they need to navigate life and health. As this platform provides research based information, and testimonies from young women who have been through the same challenges, it is a great resource for young women.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

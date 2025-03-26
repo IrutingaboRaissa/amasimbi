@@ -63,10 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.login(email, password);
       setUser(response.data.user);
       setIsAuthenticated(true);
-      toast.success(response.message || 'Successfully logged in!');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Failed to login. Please check your credentials.');
       throw error;
     } finally {
       setLoading(false);
@@ -85,10 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setUser(response.data.user);
       setIsAuthenticated(true);
-      toast.success(response.message || 'Registration successful!');
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Failed to register. Please try again.');
       throw error;
     } finally {
       setLoading(false);

@@ -8,7 +8,7 @@ const values = [
   {
     icon: <Heart className="w-8 h-8" />,
     title: 'Empathy',
-    description: 'We put ourselves in our users\' shoes to understand their needs and challenges.'
+    description: 'We provide information that is relevant to young women and that they can relate to.'
   },
   {
     icon: <Users className="w-8 h-8" />,
@@ -18,7 +18,7 @@ const values = [
   {
     icon: <BookOpen className="w-8 h-8" />,
     title: 'Education',
-    description: 'We believe in providing quality education that empowers and transforms lives.'
+    description: 'We believe in providing quality information that is based on research and testimonies from young women who have been through the same challenges.'
   },
   {
     icon: <Shield className="w-8 h-8" />,
@@ -33,27 +33,21 @@ const values = [
   {
     icon: <Target className="w-8 h-8" />,
     title: 'Innovation',
-    description: 'We continuously innovate to provide the best learning experience.'
+    description: 'We continuously innovate to provide information that is up to date and relevant to young women.'
   }
 ];
 
 const team = [
   {
-    name: 'Sarah Johnson',
+    name: 'Raissa Irutingabo',
     role: 'Founder & CEO',
-    bio: 'With over 15 years in education, Sarah is passionate about making quality education accessible to all.',
+    bio: 'African Leadership University Student, striving to make a difference in the lives of young women.',
     image: homeImages.testimonial1
   },
   {
     name: 'David Mutoni',
-    role: 'Head of Education',
-    bio: 'David brings his expertise in curriculum development and educational psychology to shape our learning programs.',
-    image: homeImages.testimonial2
-  },
-  {
-    name: 'Emma Rodriguez',
-    role: 'Community Manager',
-    bio: 'Emma ensures our community remains supportive, engaging, and valuable for all members.',
+    role: 'Univesity of Rwanda Student, and consultant at AMASIMBI',
+    bio: 'David brings his knowledge in reproductive health and life skills to the project.',
     image: homeImages.testimonial3
   }
 ];
