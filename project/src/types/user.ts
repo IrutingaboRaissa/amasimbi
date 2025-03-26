@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
-  avatar: string;
+  avatar?: string;
   phoneNumber?: string;
   address?: string;
   bio?: string;
@@ -16,5 +16,4 @@ export interface UserUpdateData {
   phoneNumber?: string;
   address?: string;
   bio?: string;
-  avatar?: string;
 } 

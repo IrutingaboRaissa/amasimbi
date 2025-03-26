@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
 
-interface JwtPayload {
-  userId: string;
-}
+const prisma = new PrismaClient();
 
 declare global {
   namespace Express {
@@ -15,27 +14,47 @@ declare global {
   }
 }
 
-export const authenticateToken = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
-  }
-
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'your-secret-key'
-    ) as JwtPayload;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-    req.user = { id: decoded.userId };
+    if (!token) {
+      return res.status(401).json({
+        message: 'Authentication required',
+        errors: {
+          auth: 'No authentication token provided'
+        }
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string };
+    
+    // Fetch user from database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        message: 'Authentication failed',
+        errors: {
+          auth: 'User not found'
+        }
+      });
+    }
+
+    // Set user in request
+    req.user = user;
     next();
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid token' });
+    console.error('Authentication error:', error);
+    return res.status(401).json({
+      message: 'Authentication failed',
+      errors: {
+        auth: 'Invalid or expired token'
+      }
+    });
   }
 }; 

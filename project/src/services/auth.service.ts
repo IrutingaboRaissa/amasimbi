@@ -1,26 +1,5 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-export interface LoginResponse {
-  token: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-    avatar: string;
-  };
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  displayName: string;
-  age: number;
-  category: string;
-  parent_consent: boolean;
-}
+import { api } from './api';
+import type { AuthResponse, RegisterData } from './api';
 
 class AuthService {
   private static instance: AuthService;
@@ -31,6 +10,11 @@ class AuthService {
     // Load tokens from localStorage on initialization
     this.token = localStorage.getItem('token');
     this.refreshToken = localStorage.getItem('refreshToken');
+
+    // Set initial Authorization header if token exists
+    if (this.token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+    }
   }
 
   public static getInstance(): AuthService {
@@ -40,38 +24,40 @@ class AuthService {
     return AuthService.instance;
   }
 
-  public async login(email: string, password: string): Promise<LoginResponse> {
+  public async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await api.post<AuthResponse>('/auth/login', {
         email,
         password,
       });
 
-      const { token, refreshToken, user } = response.data;
+      const { token, refreshToken } = response.data.data;
       this.setTokens(token, refreshToken);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      console.error('Login error:', error.response?.data);
+      throw new Error(error.response?.data?.errors?.credentials || error.response?.data?.message || 'Login failed');
     }
   }
 
-  public async register(data: RegisterData): Promise<LoginResponse> {
+  public async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, data);
-      const { token, refreshToken, user } = response.data;
+      const response = await api.post<AuthResponse>('/auth/register', data);
+      const { token, refreshToken } = response.data.data;
       this.setTokens(token, refreshToken);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      console.error('Registration error:', error.response?.data);
+      throw new Error(error.response?.data?.errors?.email || error.response?.data?.message || 'Registration failed');
     }
   }
 
   public async refreshAccessToken(): Promise<string> {
     try {
-      const response = await axios.post(`${API_URL}/auth/refresh`, {
+      const response = await api.post<AuthResponse>('/auth/refresh', {
         refreshToken: this.refreshToken,
       });
-      const { token } = response.data;
+      const { token } = response.data.data;
       this.setTokens(token, this.refreshToken!);
       return token;
     } catch (error) {
@@ -85,6 +71,7 @@ class AuthService {
     this.refreshToken = null;
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    delete api.defaults.headers.common['Authorization'];
   }
 
   public getToken(): string | null {
@@ -96,6 +83,7 @@ class AuthService {
     this.refreshToken = refreshToken;
     localStorage.setItem('token', token);
     localStorage.setItem('refreshToken', refreshToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
   public isAuthenticated(): boolean {

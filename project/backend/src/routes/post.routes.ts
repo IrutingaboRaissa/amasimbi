@@ -10,22 +10,11 @@ router.get('/', async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
-          }
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                displayName: true,
-                avatar: true
-              }
-            }
+            category: true
           }
         }
       },
@@ -34,36 +23,93 @@ router.get('/', async (req, res) => {
       }
     });
 
-    res.json({ data: { posts } });
+    res.json({
+      message: 'Posts retrieved successfully',
+      data: { posts }
+    });
   } catch (error) {
     console.error('Get posts error:', error);
-    res.status(500).json({ message: 'Error fetching posts' });
+    res.status(500).json({
+      message: 'Failed to fetch posts',
+      errors: {
+        general: 'An unexpected error occurred while fetching posts. Please try again later.'
+      }
+    });
+  }
+});
+
+// Get single post
+router.get('/:id', async (req, res) => {
+  try {
+    const post = await prisma.post.findUnique({
+      where: { id: req.params.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            displayName: true,
+            category: true
+          }
+        },
+        comment: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                displayName: true,
+                category: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        message: 'Post not found',
+        errors: {
+          post: 'The requested post could not be found'
+        }
+      });
+    }
+
+    res.json({
+      message: 'Post retrieved successfully',
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({
+      message: 'Failed to fetch post',
+      errors: {
+        general: 'An unexpected error occurred while fetching the post. Please try again later.'
+      }
+    });
   }
 });
 
 // Create post
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, content, isAnonymous } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
+    const { content } = req.body;
 
     const post = await prisma.post.create({
       data: {
-        title,
+        id: '', // MySQL will generate this
         content,
-        isAnonymous: isAnonymous || false,
-        authorId: userId
+        authorId: req.user!.id,
+        updatedAt: new Date()
       },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
+            category: true
           }
         }
       }
@@ -75,40 +121,55 @@ router.post('/', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Create post error:', error);
-    res.status(500).json({ message: 'Error creating post' });
+    res.status(500).json({
+      message: 'Failed to create post',
+      errors: {
+        general: 'An unexpected error occurred while creating the post. Please try again later.'
+      }
+    });
   }
 });
 
 // Update post
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
     const { content } = req.body;
-    const userId = req.user?.id;
 
-    // Check if post exists and user is the author
+    // Check if post exists and is owned by the authenticated user
     const post = await prisma.post.findUnique({
-      where: { id },
-      select: { authorId: true }
+      where: { id: req.params.id }
     });
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({
+        message: 'Post not found',
+        errors: {
+          post: 'The requested post could not be found'
+        }
+      });
     }
 
-    if (post.authorId !== userId) {
-      return res.status(403).json({ message: 'Not authorized to update this post' });
+    if (post.authorId !== req.user?.id) {
+      return res.status(403).json({
+        message: 'Access denied',
+        errors: {
+          auth: 'You can only update your own posts'
+        }
+      });
     }
 
     const updatedPost = await prisma.post.update({
-      where: { id },
-      data: { content },
+      where: { id: req.params.id },
+      data: {
+        content,
+        updatedAt: new Date()
+      },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
+            category: true
           }
         }
       }
@@ -120,36 +181,59 @@ router.put('/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Update post error:', error);
-    res.status(500).json({ message: 'Error updating post' });
+    res.status(500).json({
+      message: 'Failed to update post',
+      errors: {
+        general: 'An unexpected error occurred while updating the post. Please try again later.'
+      }
+    });
   }
 });
 
 // Delete post
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-
-    // Check if post exists and user is the author
+    // Check if post exists and is owned by the authenticated user
     const post = await prisma.post.findUnique({
-      where: { id },
-      select: { authorId: true }
+      where: { id: req.params.id }
     });
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({
+        message: 'Post not found',
+        errors: {
+          post: 'The requested post could not be found'
+        }
+      });
     }
 
-    if (post.authorId !== userId) {
-      return res.status(403).json({ message: 'Not authorized to delete this post' });
+    if (post.authorId !== req.user?.id) {
+      return res.status(403).json({
+        message: 'Access denied',
+        errors: {
+          auth: 'You can only delete your own posts'
+        }
+      });
     }
 
-    await prisma.post.delete({ where: { id } });
+    await prisma.post.delete({
+      where: { id: req.params.id }
+    });
 
-    res.json({ message: 'Post deleted successfully' });
+    res.json({
+      message: 'Post deleted successfully',
+      data: {
+        message: 'The post has been permanently deleted'
+      }
+    });
   } catch (error) {
     console.error('Delete post error:', error);
-    res.status(500).json({ message: 'Error deleting post' });
+    res.status(500).json({
+      message: 'Failed to delete post',
+      errors: {
+        general: 'An unexpected error occurred while deleting the post. Please try again later.'
+      }
+    });
   }
 });
 

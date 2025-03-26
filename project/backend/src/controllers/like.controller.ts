@@ -1,27 +1,23 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const likeController = {
   // Like a post
-  async likePost(req: Request, res: Response) {
+  likePost: async (req: Request, res: Response) => {
     try {
       const { postId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({
+          message: 'Unauthorized',
+          errors: { auth: 'You must be logged in to like a post' }
+        });
       }
 
-      // Check if post exists
-      const post = await prisma.post.findUnique({
-        where: { id: postId }
-      });
-
-      if (!post) {
-        return res.status(404).json({ error: 'Post not found' });
-      }
-
-      // Check if already liked
+      // Check if like already exists
       const existingLike = await prisma.like.findUnique({
         where: {
           userId_postId: {
@@ -32,46 +28,45 @@ export const likeController = {
       });
 
       if (existingLike) {
-        return res.status(400).json({ error: 'Post already liked' });
+        return res.status(400).json({
+          message: 'Already liked',
+          errors: { like: 'You have already liked this post' }
+        });
       }
 
       // Create like
-      await prisma.like.create({
+      const like = await prisma.like.create({
         data: {
+          id: Math.random().toString(36).substring(7),
           userId,
           postId
         }
       });
 
-      res.status(201).json({ message: 'Post liked successfully' });
+      res.json({
+        message: 'Post liked successfully',
+        data: { like }
+      });
     } catch (error) {
       console.error('Like post error:', error);
-      res.status(500).json({ error: 'Failed to like post' });
+      res.status(500).json({
+        message: 'Failed to like post',
+        errors: { general: 'An unexpected error occurred while liking the post' }
+      });
     }
   },
 
   // Unlike a post
-  async unlikePost(req: Request, res: Response) {
+  unlikePost: async (req: Request, res: Response) => {
     try {
       const { postId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      // Check if like exists
-      const like = await prisma.like.findUnique({
-        where: {
-          userId_postId: {
-            userId,
-            postId
-          }
-        }
-      });
-
-      if (!like) {
-        return res.status(404).json({ error: 'Like not found' });
+        return res.status(401).json({
+          message: 'Unauthorized',
+          errors: { auth: 'You must be logged in to unlike a post' }
+        });
       }
 
       // Delete like
@@ -84,33 +79,32 @@ export const likeController = {
         }
       });
 
-      res.status(204).send();
+      res.json({
+        message: 'Post unliked successfully'
+      });
     } catch (error) {
       console.error('Unlike post error:', error);
-      res.status(500).json({ error: 'Failed to unlike post' });
+      res.status(500).json({
+        message: 'Failed to unlike post',
+        errors: { general: 'An unexpected error occurred while unliking the post' }
+      });
     }
   },
 
   // Like a comment
-  async likeComment(req: Request, res: Response) {
+  likeComment: async (req: Request, res: Response) => {
     try {
       const { commentId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({
+          message: 'Unauthorized',
+          errors: { auth: 'You must be logged in to like a comment' }
+        });
       }
 
-      // Check if comment exists
-      const comment = await prisma.comment.findUnique({
-        where: { id: commentId }
-      });
-
-      if (!comment) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
-
-      // Check if already liked
+      // Check if like already exists
       const existingLike = await prisma.like.findUnique({
         where: {
           userId_commentId: {
@@ -121,46 +115,45 @@ export const likeController = {
       });
 
       if (existingLike) {
-        return res.status(400).json({ error: 'Comment already liked' });
+        return res.status(400).json({
+          message: 'Already liked',
+          errors: { like: 'You have already liked this comment' }
+        });
       }
 
       // Create like
-      await prisma.like.create({
+      const like = await prisma.like.create({
         data: {
+          id: Math.random().toString(36).substring(7),
           userId,
           commentId
         }
       });
 
-      res.status(201).json({ message: 'Comment liked successfully' });
+      res.json({
+        message: 'Comment liked successfully',
+        data: { like }
+      });
     } catch (error) {
       console.error('Like comment error:', error);
-      res.status(500).json({ error: 'Failed to like comment' });
+      res.status(500).json({
+        message: 'Failed to like comment',
+        errors: { general: 'An unexpected error occurred while liking the comment' }
+      });
     }
   },
 
   // Unlike a comment
-  async unlikeComment(req: Request, res: Response) {
+  unlikeComment: async (req: Request, res: Response) => {
     try {
       const { commentId } = req.params;
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      // Check if like exists
-      const like = await prisma.like.findUnique({
-        where: {
-          userId_commentId: {
-            userId,
-            commentId
-          }
-        }
-      });
-
-      if (!like) {
-        return res.status(404).json({ error: 'Like not found' });
+        return res.status(401).json({
+          message: 'Unauthorized',
+          errors: { auth: 'You must be logged in to unlike a comment' }
+        });
       }
 
       // Delete like
@@ -173,10 +166,15 @@ export const likeController = {
         }
       });
 
-      res.status(204).send();
+      res.json({
+        message: 'Comment unliked successfully'
+      });
     } catch (error) {
       console.error('Unlike comment error:', error);
-      res.status(500).json({ error: 'Failed to unlike comment' });
+      res.status(500).json({
+        message: 'Failed to unlike comment',
+        errors: { general: 'An unexpected error occurred while unliking the comment' }
+      });
     }
   }
 }; 

@@ -8,16 +8,14 @@ const prisma = new PrismaClient();
 // Get comments for a post
 router.get('/post/:postId', async (req, res) => {
   try {
-    const { postId } = req.params;
-
     const comments = await prisma.comment.findMany({
-      where: { postId },
+      where: { postId: req.params.postId },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
+            category: true
           }
         }
       },
@@ -26,23 +24,26 @@ router.get('/post/:postId', async (req, res) => {
       }
     });
 
-    res.json({ data: { comments } });
+    res.json({
+      message: 'Comments retrieved successfully',
+      data: { comments }
+    });
   } catch (error) {
     console.error('Get comments error:', error);
-    res.status(500).json({ message: 'Error fetching comments' });
+    res.status(500).json({
+      message: 'Failed to fetch comments',
+      errors: {
+        general: 'An unexpected error occurred while fetching comments. Please try again later.'
+      }
+    });
   }
 });
 
 // Create comment
 router.post('/post/:postId', authenticateToken, async (req, res) => {
   try {
-    const { postId } = req.params;
-    const { content, isAnonymous } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
+    const { content } = req.body;
+    const postId = req.params.postId;
 
     // Check if post exists
     const post = await prisma.post.findUnique({
@@ -50,22 +51,28 @@ router.post('/post/:postId', authenticateToken, async (req, res) => {
     });
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({
+        message: 'Post not found',
+        errors: {
+          post: 'The post you are trying to comment on does not exist'
+        }
+      });
     }
 
     const comment = await prisma.comment.create({
       data: {
+        id: '', // MySQL will generate this
         content,
-        isAnonymous: isAnonymous || false,
-        authorId: userId,
-        postId
+        authorId: req.user!.id,
+        postId,
+        updatedAt: new Date()
       },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
+            category: true
           }
         }
       }
@@ -77,40 +84,55 @@ router.post('/post/:postId', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Create comment error:', error);
-    res.status(500).json({ message: 'Error creating comment' });
+    res.status(500).json({
+      message: 'Failed to create comment',
+      errors: {
+        general: 'An unexpected error occurred while creating the comment. Please try again later.'
+      }
+    });
   }
 });
 
 // Update comment
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
     const { content } = req.body;
-    const userId = req.user?.id;
 
-    // Check if comment exists and user is the author
+    // Check if comment exists and is owned by the authenticated user
     const comment = await prisma.comment.findUnique({
-      where: { id },
-      select: { authorId: true }
+      where: { id: req.params.id }
     });
 
     if (!comment) {
-      return res.status(404).json({ message: 'Comment not found' });
+      return res.status(404).json({
+        message: 'Comment not found',
+        errors: {
+          comment: 'The requested comment could not be found'
+        }
+      });
     }
 
-    if (comment.authorId !== userId) {
-      return res.status(403).json({ message: 'Not authorized to update this comment' });
+    if (comment.authorId !== req.user?.id) {
+      return res.status(403).json({
+        message: 'Access denied',
+        errors: {
+          auth: 'You can only update your own comments'
+        }
+      });
     }
 
     const updatedComment = await prisma.comment.update({
-      where: { id },
-      data: { content },
+      where: { id: req.params.id },
+      data: {
+        content,
+        updatedAt: new Date()
+      },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             displayName: true,
-            avatar: true
+            category: true
           }
         }
       }
@@ -122,36 +144,59 @@ router.put('/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Update comment error:', error);
-    res.status(500).json({ message: 'Error updating comment' });
+    res.status(500).json({
+      message: 'Failed to update comment',
+      errors: {
+        general: 'An unexpected error occurred while updating the comment. Please try again later.'
+      }
+    });
   }
 });
 
 // Delete comment
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-
-    // Check if comment exists and user is the author
+    // Check if comment exists and is owned by the authenticated user
     const comment = await prisma.comment.findUnique({
-      where: { id },
-      select: { authorId: true }
+      where: { id: req.params.id }
     });
 
     if (!comment) {
-      return res.status(404).json({ message: 'Comment not found' });
+      return res.status(404).json({
+        message: 'Comment not found',
+        errors: {
+          comment: 'The requested comment could not be found'
+        }
+      });
     }
 
-    if (comment.authorId !== userId) {
-      return res.status(403).json({ message: 'Not authorized to delete this comment' });
+    if (comment.authorId !== req.user?.id) {
+      return res.status(403).json({
+        message: 'Access denied',
+        errors: {
+          auth: 'You can only delete your own comments'
+        }
+      });
     }
 
-    await prisma.comment.delete({ where: { id } });
+    await prisma.comment.delete({
+      where: { id: req.params.id }
+    });
 
-    res.json({ message: 'Comment deleted successfully' });
+    res.json({
+      message: 'Comment deleted successfully',
+      data: {
+        message: 'The comment has been permanently deleted'
+      }
+    });
   } catch (error) {
     console.error('Delete comment error:', error);
-    res.status(500).json({ message: 'Error deleting comment' });
+    res.status(500).json({
+      message: 'Failed to delete comment',
+      errors: {
+        general: 'An unexpected error occurred while deleting the comment. Please try again later.'
+      }
+    });
   }
 });
 
