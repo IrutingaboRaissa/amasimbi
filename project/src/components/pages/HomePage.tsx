@@ -6,7 +6,7 @@ import vision from '@/assets/images/vision.jpg';
 import community from '@/assets/images/community.jpg';
 import parents from '@/assets/images/parents-ados-03.jpg';
 import repro from '@/assets/images/repro.jpg';
-import Body from '@/assets/images/body.jpg';
+import body from '@/assets/images/body.jpg';
 import dec from '@/assets/images/dec.jpeg';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,14 +50,16 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] sm:min-h-[80vh] flex items-center bg-cover bg-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center bg-cover bg-center overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={strongw}
-            alt="Strong Women"
-            className="px-96 py-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 via-purple-900/85 to-purple-800/80"></div>
+          <div className="relative w-full h-full">
+            <img
+              src={strongw}
+              alt="Strong Women"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 via-purple-900/85 to-purple-800/80"></div>
+          </div>
         </div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl">
@@ -226,7 +228,7 @@ export function HomePage() {
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100 hover:shadow-xl transition-all">
               <div className="relative h-48 sm:h-64">
                 <img
-                  src={Body}
+                  src={body}
                   alt="Understanding Your Body"
                   className="w-full h-full object-cover"
                 />

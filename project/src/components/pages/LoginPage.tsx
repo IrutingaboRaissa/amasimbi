@@ -20,11 +20,11 @@ export function LoginPage() {
     setSuccess('');
 
     try {
-      // Add your actual login logic here
-      login(); // This will set isAuthenticated to true
-      navigate('/home');
+      await login(email, password);
+      setSuccess('Login successful!');
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }

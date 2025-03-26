@@ -1,7 +1,85 @@
-import { User, Bell, Settings, BookOpen, Award, Heart, Calendar, Edit, Camera, LogOut } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Bell, Settings, BookOpen, Award, Heart, Calendar, Edit, Camera, LogOut, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserUpdateData } from '@/types/user';
+import api from '@/services/api';
 
 export function ProfilePage() {
+  const { user, updateUser } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [formData, setFormData] = useState<UserUpdateData>({
+    displayName: user?.displayName || '',
+    email: user?.email || '',
+    phoneNumber: user?.phoneNumber || '',
+    address: user?.address || '',
+    bio: user?.bio || '',
+    avatar: user?.avatar || ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        displayName: user.displayName,
+        email: user.email,
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
+        bio: user.bio || '',
+        avatar: user.avatar
+      });
+    }
+  }, [user]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await api.post('/users/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setFormData(prev => ({ ...prev, avatar: response.data.avatarUrl }));
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setError('Failed to upload avatar');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await updateUser(formData);
+      setSuccess('Profile updated successfully!');
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const achievements = [
     { title: "Quick Learner", description: "Completed 5 courses in first month", icon: BookOpen },
     { title: "Active Participant", description: "Posted 20+ times in community", icon: Heart },
@@ -39,47 +117,161 @@ export function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
-      <header className="bg-purple-100 py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-purple-200">
-                <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop"
-                  alt="Sarah Johnson"
-                  className="w-full h-full object-cover"
-                />
-                <button className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera className="text-white" size={24} />
-                </button>
-              </div>
-              <button className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-                <Edit size={16} />
-              </button>
-            </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-4xl font-bold text-purple-900 mb-2">Sarah Johnson</h1>
-              <p className="text-purple-700 mb-4">Member since January 2024</p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Settings size={18} className="mr-2" />
-                  Edit Profile
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white">
-                  <Bell size={18} className="mr-2" />
-                  Notifications
-                </Button>
-                <Button variant="outline" className="bg-white/80 hover:bg-white text-red-600 hover:text-red-700">
-                  <LogOut size={18} className="mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-purple-900">My Profile</h1>
+            {!isEditing && (
+              <Button onClick={() => setIsEditing(true)}>
+                Edit Profile
+              </Button>
+            )}
           </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative">
+                <img
+                  src={formData.avatar || '/default-avatar.png'}
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full object-cover"
+                />
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={handleAvatarClick}
+                    className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            {/* Profile Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  name="displayName"
+                  value={formData.displayName}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bio
+              </label>
+              <textarea
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                disabled={!isEditing}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Error and Success Messages */}
+            {error && (
+              <div className="text-red-600 bg-red-50 p-3 rounded-lg">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="text-green-600 bg-green-50 p-3 rounded-lg">
+                {success}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            {isEditing && (
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      displayName: user?.displayName || '',
+                      email: user?.email || '',
+                      phoneNumber: user?.phoneNumber || '',
+                      address: user?.address || '',
+                      bio: user?.bio || '',
+                      avatar: user?.avatar || ''
+                    });
+                  }}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  <Save className="w-4 h-4 mr-2" />
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            )}
+          </form>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto py-12 px-4">
         <div className="grid gap-8 md:grid-cols-3">
