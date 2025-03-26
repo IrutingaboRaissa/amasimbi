@@ -3,15 +3,17 @@ import { Request, Response, NextFunction } from 'express';
 export const validateRegistration = (req: Request, res: Response, next: NextFunction) => {
   const { email, password, displayName, age } = req.body;
 
-  if (!email || !password || !displayName || !age) {
+  // Check for missing required fields
+  const errors: Record<string, string> = {};
+  
+  if (!email) errors.email = 'Email is required';
+  if (!password) errors.password = 'Password is required';
+  if (!displayName) errors.displayName = 'Display name is required';
+
+  if (Object.keys(errors).length > 0) {
     return res.status(400).json({
       message: 'Missing required fields',
-      errors: {
-        email: !email ? 'Email is required' : null,
-        password: !password ? 'Password is required' : null,
-        displayName: !displayName ? 'Display name is required' : null,
-        age: !age ? 'Age is required' : null
-      }
+      errors
     });
   }
 
@@ -19,22 +21,52 @@ export const validateRegistration = (req: Request, res: Response, next: NextFunc
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
-      message: 'Invalid email format'
+      message: 'Invalid email format',
+      errors: {
+        email: 'Please enter a valid email address'
+      }
     });
   }
 
   // Validate password strength
-  if (password.length < 8) {
+  if (password.length < 6) {
     return res.status(400).json({
-      message: 'Password must be at least 8 characters long'
+      message: 'Password does not meet requirements',
+      errors: {
+        password: 'Password must be at least 6 characters long'
+      }
     });
   }
 
-  // Validate age
-  if (typeof age !== 'number' || age < 12 || age > 100) {
-    return res.status(400).json({
-      message: 'Age must be between 12 and 100'
-    });
+  // Validate age if provided
+  if (age !== undefined) {
+    const ageNum = parseInt(age.toString());
+    if (isNaN(ageNum)) {
+      return res.status(400).json({
+        message: 'Invalid age format',
+        errors: {
+          age: 'Age must be a number'
+        }
+      });
+    }
+
+    if (ageNum < 12) {
+      return res.status(400).json({
+        message: 'Age requirement not met',
+        errors: {
+          age: 'You must be at least 12 years old to register'
+        }
+      });
+    }
+
+    if (ageNum > 100) {
+      return res.status(400).json({
+        message: 'Invalid age',
+        errors: {
+          age: 'Please enter a valid age'
+        }
+      });
+    }
   }
 
   next();
@@ -43,13 +75,16 @@ export const validateRegistration = (req: Request, res: Response, next: NextFunc
 export const validateLogin = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  // Check for missing fields
+  const errors: Record<string, string> = {};
+  
+  if (!email) errors.email = 'Email is required';
+  if (!password) errors.password = 'Password is required';
+
+  if (Object.keys(errors).length > 0) {
     return res.status(400).json({
       message: 'Missing required fields',
-      errors: {
-        email: !email ? 'Email is required' : null,
-        password: !password ? 'Password is required' : null
-      }
+      errors
     });
   }
 
@@ -57,7 +92,10 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
-      message: 'Invalid email format'
+      message: 'Invalid email format',
+      errors: {
+        email: 'Please enter a valid email address'
+      }
     });
   }
 

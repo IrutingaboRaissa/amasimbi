@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth';
 import postRouter from './routes/post.routes';
 import { commentRouter } from './routes/comment.routes';
 import { likeRouter } from './routes/like.routes';
+import { userRouter } from './routes/user.routes';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.json({ limit: config.upload.maxFileSize }));
 
 // Routes
 app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/comments', commentRouter);
 app.use('/api/likes', likeRouter);

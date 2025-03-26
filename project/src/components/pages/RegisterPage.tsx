@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Mail, User, Calendar, ArrowRight } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ export function RegisterPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const { register, error, isAgeEligible } = useAuth();
+  const { register, isAgeEligible } = useAuth();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -42,13 +43,13 @@ export function RegisterPage() {
       errors.confirmPassword = 'Passwords do not match';
     }
 
-    const age = parseInt(formData.age);
-    if (!formData.age) {
-      errors.age = 'Age is required';
-    } else if (isNaN(age) || age < 0) {
-      errors.age = 'Please enter a valid age';
-    } else if (!isAgeEligible(age)) {
-      errors.age = 'You must be between 12 and 25 years old to register';
+    if (formData.age) {
+      const age = parseInt(formData.age);
+      if (isNaN(age) || age < 0) {
+        errors.age = 'Please enter a valid age';
+      } else if (!isAgeEligible(age)) {
+        errors.age = 'You must be at least 12 years old to register';
+      }
     }
 
     setFormErrors(errors);
@@ -78,11 +79,19 @@ export function RegisterPage() {
         formData.email,
         formData.password,
         formData.displayName,
-        parseInt(formData.age)
+        formData.age ? parseInt(formData.age) : undefined
       );
+      toast.success('Registration successful! Welcome aboard!');
       navigate('/dashboard');
-    } catch (err) {
-      // Error is handled by AuthContext
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      const errorMessage = err.message || 'Failed to register. Please try again.';
+      toast.error(errorMessage);
+      
+      // Handle specific backend validation errors
+      if (err.response?.data?.errors) {
+        setFormErrors(err.response.data.errors);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -105,12 +114,6 @@ export function RegisterPage() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
           <div className="space-y-4">
             <div>
               <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
@@ -173,13 +176,12 @@ export function RegisterPage() {
                   id="age"
                   name="age"
                   type="number"
-                  required
                   min="12"
-                  max="25"
+                  max="100"
                   value={formData.age}
                   onChange={handleChange}
                   className={`pl-10 ${formErrors.age ? 'border-red-500' : ''}`}
-                  placeholder="Enter your age (12-25)"
+                  placeholder="Enter your age (optional)"
                 />
               </div>
               {formErrors.age && (
@@ -236,33 +238,32 @@ export function RegisterPage() {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center">
-                <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                Creating account...
-              </div>
-            ) : (
-              <div className="flex items-center justify-center">
-                Create Account
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </div>
-            )}
-          </Button>
-        </form>
+          <div>
+            <Button
+              type="submit"
+              className="group relative w-full flex justify-center py-2 px-4"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                'Creating account...'
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </div>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
-              Sign in
-            </Link>
-          </p>
-        </div>
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

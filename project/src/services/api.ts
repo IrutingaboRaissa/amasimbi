@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { authService } from './auth.service';
+import { User } from '@/types/user';
 
 // Types
 export interface LoginCredentials {
@@ -9,34 +9,26 @@ export interface LoginCredentials {
 
 export interface RegisterData extends LoginCredentials {
   displayName: string;
-  avatar?: string;
-  age: number;
-  category: string;
-  parent_consent: boolean;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-  avatar?: string;
-  age: number;
-  category: string;
-  parent_consent: boolean;
+  age?: number;
+  category?: string;
+  parent_consent?: boolean;
 }
 
 export interface AuthResponse {
-  token: string;
-  user: User;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+    refreshToken: string;
+  };
 }
 
 // API instance configuration
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
-  },
-  withCredentials: true
+  }
 });
 
 // Request interceptor
@@ -65,17 +57,28 @@ api.interceptors.response.use(
 
       try {
         // Try to refresh the token
-        await authService.refreshAccessToken();
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await api.post<AuthResponse>('/auth/refresh', { refreshToken });
+        const { token } = response.data.data;
+        
+        // Store the new token
+        localStorage.setItem('token', token);
+        
+        // Update authorization header
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         // Retry the original request with the new token
-        const token = localStorage.getItem('token');
-        if (token) {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, logout the user
-        authService.logout();
+        // If refresh fails, clear tokens and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        delete api.defaults.headers.common['Authorization'];
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

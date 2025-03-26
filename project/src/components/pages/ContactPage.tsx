@@ -125,7 +125,7 @@ export function ContactPage() {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="John Doe"
+                    placeholder="John KWIZERA"
                   />
                 </div>
 
@@ -141,7 +141,7 @@ export function ContactPage() {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="john@example.com"
+                    placeholder="john@gmail.com"
                   />
                 </div>
 

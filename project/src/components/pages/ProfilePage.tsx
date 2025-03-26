@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Camera, Save, X } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import api from '@/services/api';
 import { User } from '@/types/user';
 
 interface FormData {
@@ -12,7 +11,6 @@ interface FormData {
   phoneNumber: string;
   address: string;
   bio: string;
-  avatar: string;
 }
 
 export function ProfilePage() {
@@ -24,8 +22,7 @@ export function ProfilePage() {
     email: user?.email || '',
     phoneNumber: user?.phoneNumber || '',
     address: user?.address || '',
-    bio: user?.bio || '',
-    avatar: user?.avatar || ''
+    bio: user?.bio || ''
   });
 
   useEffect(() => {
@@ -35,8 +32,7 @@ export function ProfilePage() {
         email: user.email,
         phoneNumber: user.phoneNumber || '',
         address: user.address || '',
-        bio: user.bio || '',
-        avatar: user.avatar || ''
+        bio: user.bio || ''
       });
     }
   }, [user]);
@@ -44,28 +40,6 @@ export function ProfilePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev: FormData) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    try {
-      setLoading(true);
-      const response = await api.post('/users/avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setFormData((prev: FormData) => ({ ...prev, avatar: response.data.avatarUrl }));
-      toast.success('Profile picture updated successfully');
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast.error('Failed to upload profile picture');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,32 +71,6 @@ export function ProfilePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <img
-                src={formData.avatar || '/default-avatar.png'}
-                alt="Profile"
-                className="w-32 h-32 rounded-full object-cover"
-              />
-              {isEditing && (
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 cursor-pointer"
-                >
-                  <Camera className="w-5 h-5" />
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
           {/* Profile Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -209,8 +157,7 @@ export function ProfilePage() {
                     email: user?.email || '',
                     phoneNumber: user?.phoneNumber || '',
                     address: user?.address || '',
-                    bio: user?.bio || '',
-                    avatar: user?.avatar || ''
+                    bio: user?.bio || ''
                   });
                 }}
               >

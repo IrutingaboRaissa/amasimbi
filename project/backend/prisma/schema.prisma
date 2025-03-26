@@ -1,65 +1,71 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  password       String
-  displayName    String
-  age           Int
-  category      String
-  parent_consent Boolean   @default(false)
+model comment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  user      user     @relation(fields: [authorId], references: [id], map: "Comment_authorId_fkey")
+  post      post     @relation(fields: [postId], references: [id], map: "Comment_postId_fkey")
+  like      like[]
+
+  @@index([authorId], map: "Comment_authorId_fkey")
+  @@index([postId], map: "Comment_postId_fkey")
+}
+
+model like {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String?
+  commentId String?
+  createdAt DateTime @default(now())
+  comment   comment? @relation(fields: [commentId], references: [id], map: "Like_commentId_fkey")
+  post      post?    @relation(fields: [postId], references: [id], map: "Like_postId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "Like_userId_fkey")
+
+  @@unique([userId, commentId], map: "Like_userId_commentId_key")
+  @@unique([userId, postId], map: "Like_userId_postId_key")
+  @@index([commentId], map: "Like_commentId_fkey")
+  @@index([postId], map: "Like_postId_fkey")
+}
+
+model post {
+  id        String    @id @default(uuid())
+  content   String
+  authorId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  comment   comment[]
+  like      like[]
+  user      user      @relation(fields: [authorId], references: [id], map: "Post_authorId_fkey")
+
+  @@index([authorId], map: "Post_authorId_fkey")
+}
+
+model user {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  displayName   String
+  phoneNumber   String?
+  address       String?
+  bio           String?
+  age           Int?
+  category      String?
+  parent_consent Boolean  @default(false)
   avatar        String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  posts         Post[]
-  comments      Comment[]
-  activities    Activity[]
-}
-
-model Post {
-  id          String    @id @default(cuid())
-  title       String
-  content     String
-  isAnonymous Boolean   @default(false)
-  anonymousId String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId    String
-  comments    Comment[]
-}
-
-model Comment {
-  id          String    @id @default(cuid())
-  content     String
-  isAnonymous Boolean   @default(false)
-  anonymousId String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId    String
-  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId      String
-}
-
-model Activity {
-  id        String   @id @default(uuid())
-  type      String   // e.g., "login", "profile_update", "post_created"
-  details   String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  posts         post[]
+  comments      comment[]
+  likes         like[]
 }

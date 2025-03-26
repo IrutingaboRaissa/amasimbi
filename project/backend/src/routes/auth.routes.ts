@@ -11,12 +11,17 @@ const prisma = new PrismaClient();
 // Register
 router.post('/register', validateRegistration, async (req, res) => {
   try {
-    const { email, password, displayName, age, category, parent_consent } = req.body;
+    const { email, password, displayName, age, category = 'student', parent_consent = false } = req.body;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({
+        message: 'Registration failed',
+        errors: {
+          email: 'This email is already registered. Please use a different email or try logging in.'
+        }
+      });
     }
 
     // Hash password
@@ -28,35 +33,45 @@ router.post('/register', validateRegistration, async (req, res) => {
         email,
         password: hashedPassword,
         displayName,
-        age,
+        age: age ? parseInt(age.toString()) : 13, // Default age if not provided
         category,
-        parent_consent: parent_consent || false
-      },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        age: true,
-        category: true,
-        parent_consent: true,
-        avatar: true
+        parent_consent,
+        avatar: 'default-avatar.png'
       }
     });
 
-    // Generate token
+    // Generate tokens
     const token = jwt.sign(
-      { userId: user.id },
+      { id: user.id },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
 
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    // Return user data without password
+    const { password: _, ...userWithoutPassword } = user;
+
     res.status(201).json({
-      message: 'User registered successfully',
-      data: { user, token }
+      message: 'Registration successful',
+      data: { 
+        user: userWithoutPassword,
+        token,
+        refreshToken
+      }
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Error registering user' });
+    res.status(500).json({
+      message: 'Registration failed',
+      errors: {
+        general: 'An unexpected error occurred during registration. Please try again later.'
+      }
+    });
   }
 });
 
@@ -67,34 +82,40 @@ router.post('/login', validateLogin, async (req, res) => {
 
     // Find user
     const user = await prisma.user.findUnique({ 
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        displayName: true,
-        age: true,
-        category: true,
-        parent_consent: true,
-        avatar: true
-      }
+      where: { email }
     });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({
+        message: 'Login failed',
+        errors: {
+          credentials: 'Invalid email or password. Please check your credentials and try again.'
+        }
+      });
     }
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({
+        message: 'Login failed',
+        errors: {
+          credentials: 'Invalid email or password. Please check your credentials and try again.'
+        }
+      });
     }
 
-    // Generate token
+    // Generate tokens
     const token = jwt.sign(
-      { userId: user.id },
+      { id: user.id },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      { expiresIn: '7d' }
     );
 
     // Remove password from response
@@ -102,49 +123,90 @@ router.post('/login', validateLogin, async (req, res) => {
 
     res.json({
       message: 'Login successful',
-      data: { user: userWithoutPassword, token }
+      data: { 
+        user: userWithoutPassword,
+        token,
+        refreshToken
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Error logging in' });
+    res.status(500).json({
+      message: 'Login failed',
+      errors: {
+        general: 'An unexpected error occurred during login. Please try again later.'
+      }
+    });
   }
 });
 
 // Get current user
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: req.user!.id },
       select: {
         id: true,
         email: true,
         displayName: true,
+        avatar: true,
         age: true,
         category: true,
         parent_consent: true,
-        avatar: true
+        createdAt: true,
+        updatedAt: true
       }
     });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        message: 'User not found',
+        errors: {
+          user: 'Could not find user data'
+        }
+      });
     }
 
-    res.json({ data: { user } });
+    // Generate new tokens
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.REFRESH_TOKEN_SECRET || 'your-refresh-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'User data retrieved successfully',
+      data: { 
+        user,
+        token,
+        refreshToken
+      }
+    });
   } catch (error) {
-    console.error('Get current user error:', error);
-    res.status(500).json({ message: 'Error fetching user data' });
+    console.error('Get user error:', error);
+    res.status(500).json({
+      message: 'Failed to get user data',
+      errors: {
+        general: 'An unexpected error occurred while fetching user data'
+      }
+    });
   }
 });
 
-// Logout (optional - frontend can handle token removal)
+// Logout
 router.post('/logout', authenticateToken, (_req, res) => {
-  res.json({ message: 'Logged out successfully' });
+  res.json({
+    message: 'Logout successful',
+    data: {
+      message: 'You have been successfully logged out'
+    }
+  });
 });
 
 export const authRouter = router; 
