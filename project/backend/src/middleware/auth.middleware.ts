@@ -28,7 +28,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'amasimbi-super-secret-key-2024') as { id: string };
     
     // Fetch user from database
     const user = await prisma.user.findUnique({
