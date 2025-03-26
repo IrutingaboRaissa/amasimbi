@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  functions = "dist/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+[[plugins]]
+  package = "@netlify/plugin-functions-core"
+
+[functions]
+  node_bundler = "esbuild" 

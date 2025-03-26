@@ -1,51 +1,115 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { AuthRequest } from '../middleware/auth';
 
 export const commentController = {
   // Create a new comment
-  async create(req: AuthRequest, res: Response) {
+  async createComment(req: Request, res: Response) {
     try {
       const { content } = req.body;
       const { postId } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Check if post exists
+      const post = await prisma.post.findUnique({
+        where: { id: postId }
+      });
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
       }
 
       const comment = await prisma.comment.create({
         data: {
           content,
           authorId: userId,
-          postId,
+          postId
         },
         include: {
           author: {
             select: {
               id: true,
               displayName: true,
-              avatar: true,
-            },
-          },
-        },
+              avatar: true
+            }
+          }
+        }
       });
 
-      return res.status(201).json(comment);
+      res.status(201).json(comment);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to create comment' });
+      console.error('Create comment error:', error);
+      res.status(500).json({ error: 'Failed to create comment' });
+    }
+  },
+
+  // Get comments for a post
+  async getComments(req: Request, res: Response) {
+    try {
+      const { postId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const [comments, total] = await Promise.all([
+        prisma.comment.findMany({
+          where: { postId },
+          skip,
+          take: limit,
+          orderBy: {
+            createdAt: 'desc'
+          },
+          include: {
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+                avatar: true
+              }
+            },
+            _count: {
+              select: {
+                likes: true
+              }
+            }
+          }
+        }),
+        prisma.comment.count({
+          where: { postId }
+        })
+      ]);
+
+      res.json({
+        comments,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get comments error:', error);
+      res.status(500).json({ error: 'Failed to get comments' });
     }
   },
 
   // Update a comment
-  async update(req: AuthRequest, res: Response) {
+  async updateComment(req: Request, res: Response) {
     try {
       const { id } = req.params;
       const { content } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
       const comment = await prisma.comment.findUnique({
-        where: { id },
+        where: { id }
       });
 
       if (!comment) {
@@ -53,7 +117,7 @@ export const commentController = {
       }
 
       if (comment.authorId !== userId) {
-        return res.status(403).json({ error: 'Forbidden' });
+        return res.status(403).json({ error: 'Not authorized to update this comment' });
       }
 
       const updatedComment = await prisma.comment.update({
@@ -64,26 +128,31 @@ export const commentController = {
             select: {
               id: true,
               displayName: true,
-              avatar: true,
-            },
-          },
-        },
+              avatar: true
+            }
+          }
+        }
       });
 
-      return res.json(updatedComment);
+      res.json(updatedComment);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to update comment' });
+      console.error('Update comment error:', error);
+      res.status(500).json({ error: 'Failed to update comment' });
     }
   },
 
   // Delete a comment
-  async delete(req: AuthRequest, res: Response) {
+  async deleteComment(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
       const comment = await prisma.comment.findUnique({
-        where: { id },
+        where: { id }
       });
 
       if (!comment) {
@@ -91,64 +160,17 @@ export const commentController = {
       }
 
       if (comment.authorId !== userId) {
-        return res.status(403).json({ error: 'Forbidden' });
+        return res.status(403).json({ error: 'Not authorized to delete this comment' });
       }
 
       await prisma.comment.delete({
-        where: { id },
+        where: { id }
       });
 
-      return res.status(204).send();
+      res.status(204).send();
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to delete comment' });
+      console.error('Delete comment error:', error);
+      res.status(500).json({ error: 'Failed to delete comment' });
     }
-  },
-
-  // Like a comment
-  async like(req: AuthRequest, res: Response) {
-    try {
-      const { id } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      await prisma.like.create({
-        data: {
-          commentId: id,
-          userId,
-        },
-      });
-
-      return res.status(201).send();
-    } catch (error) {
-      return res.status(500).json({ error: 'Failed to like comment' });
-    }
-  },
-
-  // Unlike a comment
-  async unlike(req: AuthRequest, res: Response) {
-    try {
-      const { id } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      await prisma.like.delete({
-        where: {
-          userId_commentId: {
-            userId,
-            commentId: id,
-          },
-        },
-      });
-
-      return res.status(204).send();
-    } catch (error) {
-      return res.status(500).json({ error: 'Failed to unlike comment' });
-    }
-  },
+  }
 }; 

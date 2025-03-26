@@ -1,243 +1,217 @@
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Search, Download, ExternalLink, PlayCircle, BookOpen, Heart, Share2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  FileText,
+  Link as LinkIcon,
+  Download,
+  Search,
+  BookOpen,
+  Video,
+  FileQuestion,
+  ExternalLink,
+  Filter
+} from 'lucide-react';
+import { useState } from 'react';
+
+interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  type: 'document' | 'video' | 'link' | 'guide';
+  category: string;
+  url: string;
+  fileSize?: string;
+  duration?: string;
+}
 
 export function ResourcesPage() {
-  const featuredResources = [
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const resources: Resource[] = [
     {
-      title: "Self-Care Starter Guide",
-      type: "Featured Guide",
-      description: "A comprehensive guide to building a sustainable self-care routine that fits your lifestyle",
-      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1920&auto=format&fit=crop",
-      downloadUrl: "#",
-      category: "Wellness",
-      downloads: "1.2K"
+      id: '1',
+      title: "Understanding Your Body - Comprehensive Guide",
+      description: "A detailed guide about female anatomy and development during puberty.",
+      type: "document",
+      category: "Health Education",
+      url: "/resources/understanding-body-guide.pdf",
+      fileSize: "2.4 MB"
     },
     {
-      title: "Mindfulness Meditation Series",
-      type: "Video Course",
-      description: "10-part video series teaching fundamental mindfulness practices for daily life",
-      image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=1920&auto=format&fit=crop",
-      downloadUrl: "#",
-      category: "Mental Health",
-      downloads: 856
+      id: '2',
+      title: "Menstrual Health and Hygiene",
+      description: "Learn about menstrual health, hygiene practices, and self-care during periods.",
+      type: "video",
+      category: "Health Education",
+      url: "https://youtube.com/watch?v=example1",
+      duration: "15:30"
     },
     {
-      title: "Women's Health Encyclopedia",
-      type: "Digital Book",
-      description: "Everything you need to know about women's health, written by leading experts",
-      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1920&auto=format&fit=crop",
-      downloadUrl: "#",
-      category: "Health",
-      downloads: "2.3K"
+      id: '3',
+      title: "Parent-Teen Communication Guide",
+      description: "Tips and strategies for better communication between parents and teens.",
+      type: "guide",
+      category: "Family Resources",
+      url: "/resources/parent-teen-guide.pdf",
+      fileSize: "1.8 MB"
+    },
+    {
+      id: '4',
+      title: "WHO Reproductive Health Resources",
+      description: "Access trusted information from the World Health Organization.",
+      type: "link",
+      category: "External Resources",
+      url: "https://www.who.int/health-topics/sexual-and-reproductive-health"
     }
   ];
 
-  const categories = [
-    { name: "Mental Wellness", icon: Heart, count: 24 },
-    { name: "Physical Health", icon: BookOpen, count: 18 },
-    { name: "Personal Growth", icon: PlayCircle, count: 15 },
-    { name: "Relationships", icon: Share2, count: 12 }
-  ];
+  const categories = Array.from(new Set(resources.map(r => r.category)));
 
-  const resources = [
-    {
-      title: "Parent's Guide to Teen Health",
-      type: "PDF Guide",
-      description: "Comprehensive guide for parents on discussing health topics with teens",
-      category: "Parenting",
-      downloadUrl: "#",
-      downloads: 450
-    },
-    {
-      title: "Mental Health Support Directory",
-      type: "External Link",
-      description: "List of mental health resources and support services",
-      category: "Mental Health",
-      downloadUrl: "#",
-      downloads: 780
-    },
-    {
-      title: "Healthy Living Tips",
-      type: "Video Series",
-      description: "Weekly video series on maintaining a healthy lifestyle",
-      category: "Lifestyle",
-      downloadUrl: "#",
-      downloads: 623
-    },
-    {
-      title: "Women's Fitness Guide",
-      type: "Interactive PDF",
-      description: "Customizable fitness plans designed specifically for women",
-      category: "Fitness",
-      downloadUrl: "#",
-      downloads: 892
-    },
-    {
-      title: "Nutrition Made Simple",
-      type: "E-Book",
-      description: "Easy-to-follow nutrition guide with meal plans and recipes",
-      category: "Nutrition",
-      downloadUrl: "#",
-      downloads: 567
-    },
-    {
-      title: "Stress Management Toolkit",
-      type: "Resource Kit",
-      description: "Collection of tools and techniques for managing daily stress",
-      category: "Mental Health",
-      downloadUrl: "#",
-      downloads: 734
+  const getIcon = (type: Resource['type']) => {
+    switch (type) {
+      case 'document':
+        return <FileText className="w-6 h-6" />;
+      case 'video':
+        return <Video className="w-6 h-6" />;
+      case 'link':
+        return <LinkIcon className="w-6 h-6" />;
+      case 'guide':
+        return <BookOpen className="w-6 h-6" />;
+      default:
+        return <FileQuestion className="w-6 h-6" />;
     }
-  ];
+  };
+
+  const filteredResources = resources.filter(resource => {
+    const matchesSearch = !searchQuery || 
+      resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = !selectedCategory || resource.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
-      <header className="bg-purple-100 py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center"></div>
-        <div className="container mx-auto text-center relative z-10 px-4">
-          <h1 className="text-5xl font-bold text-purple-900 mb-4">Resources & Guides</h1>
-          <p className="text-xl text-purple-700 mb-8 max-w-2xl mx-auto">Discover our carefully curated collection of resources designed to support your personal growth and well-being journey</p>
-          <div className="max-w-2xl mx-auto relative">
-            <input
-              type="search"
-              placeholder="Search resources..."
-              className="w-full px-6 py-4 rounded-full border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300 pl-12"
-            />
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400" size={20} />
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto py-16 px-4">
-        {/* Featured Resources */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-purple-900 mb-8">Featured Resources</h2>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {featuredResources.map((resource, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100 group hover:shadow-xl transition-shadow">
-                <div className="relative h-48">
-                  <img src={resource.image} alt={resource.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 to-transparent"></div>
-                  <span className="absolute bottom-4 left-4 bg-white/90 text-purple-700 px-4 py-1 rounded-full text-sm">
-                    {resource.category}
-                  </span>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-purple-900">{resource.title}</h3>
-                    <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-100">
-                      {resource.type}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mb-6">{resource.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-purple-600">{resource.downloads} downloads</span>
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Download size={18} className="mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Categories */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-purple-900 mb-8">Browse by Category</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {categories.map((category, index) => {
-              const Icon = category.icon;
-              return (
-                <div key={index} className="bg-white rounded-2xl p-6 border border-purple-100 hover:shadow-lg transition-shadow cursor-pointer group">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition-colors">
-                      <Icon size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-purple-900">{category.name}</h3>
-                      <p className="text-sm text-purple-600">{category.count} resources</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* All Resources */}
-        <section>
-          <h2 className="text-3xl font-bold text-purple-900 mb-8">All Resources</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {resources.map((resource, index) => (
-              <div key={index} className="bg-white rounded-2xl p-6 border border-purple-100 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-100">
-                    {resource.category}
-                  </span>
-                  <span className="text-sm text-purple-600">{resource.downloads} downloads</span>
-                </div>
-                <h3 className="text-xl font-semibold text-purple-900 mb-2">{resource.title}</h3>
-                <p className="text-gray-600 mb-6">{resource.description}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-purple-600">{resource.type}</span>
-                  <Button variant="outline" className="text-purple-600 border-purple-200">
-                    {resource.type === "External Link" ? <ExternalLink size={18} className="mr-2" /> : <Download size={18} className="mr-2" />}
-                    {resource.type === "External Link" ? "Visit Link" : "Download"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Support Section */}
-        <section className="mt-16">
-          <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 lg:p-12">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-purple-900 mb-4">Need Additional Support?</h2>
-              <p className="text-lg text-purple-700 mb-8">
-                Our team is here to help you find the resources you need. Reach out for personalized assistance and guidance on your journey.
-              </p>
-              <div className="flex gap-4 justify-center">
-                <Button className="bg-white text-purple-700 hover:bg-purple-50">
-                  Contact Support
-                </Button>
-                <Button variant="outline" className="bg-transparent border-white text-purple-700 hover:bg-white/20">
-                  Browse FAQ
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="bg-purple-50 py-12 text-center text-gray-600 mt-16">
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-purple-100 py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto mb-8">
-            <h3 className="text-2xl font-semibold text-purple-900 mb-4">Stay Updated</h3>
-            <p className="text-purple-700 mb-6">Subscribe to receive updates when we add new resources</p>
-            <div className="flex gap-4 justify-center">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="px-6 py-3 rounded-full border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-purple-300 w-64"
-              />
-              <Button className="bg-purple-600 hover:bg-purple-700 rounded-full">
-                Subscribe
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-purple-900 mb-6">
+              Resources
+            </h1>
+            <p className="text-lg text-purple-700 mb-8">
+              Access our collection of educational materials, guides, and trusted external resources
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex-1 max-w-xl relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400" size={20} />
+                <Input
+                  type="search"
+                  placeholder="Search resources..."
+                  className="w-full pl-12 border-purple-200 focus:ring-purple-300"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                className="border-purple-200 text-purple-700"
+                onClick={() => setSelectedCategory(null)}
+              >
+                <Filter size={18} className="mr-2" />
+                {selectedCategory || 'All Categories'}
               </Button>
             </div>
-          </div>
-          <nav className="mb-4">
-            <a href="#" className="mr-6 hover:text-purple-600">About Us</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Contact</a>
-            <a href="#" className="mr-6 hover:text-purple-600">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-600">Terms of Service</a>
-          </nav>
-          <p className="text-sm text-purple-700">&copy; 2024 AMASIMBI. All rights reserved.</p>
+          </motion.div>
         </div>
-      </footer>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap gap-4 justify-center">
+            {categories.map((category, index) => (
+              <motion.button
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+              >
+                {category}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Resources Grid */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredResources.map((resource, index) => (
+              <motion.div
+                key={resource.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                    {getIcon(resource.type)}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-2">
+                      {resource.title}
+                    </h3>
+                    <p className="text-purple-700 text-sm mb-4">
+                      {resource.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-purple-600">
+                        {resource.fileSize || resource.duration || 'External Link'}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(resource.url, '_blank')}
+                        className="gap-2"
+                      >
+                        {resource.type === 'document' || resource.type === 'guide' ? (
+                          <>
+                            <Download size={16} />
+                            Download
+                          </>
+                        ) : (
+                          <>
+                            <ExternalLink size={16} />
+                            View
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 } 

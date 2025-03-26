@@ -1,91 +1,98 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '@/services/auth.service';
-import { User, UserUpdateData } from '@/types/user';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import api from '@/services/api';
+import type { User, AuthResponse } from '@/services/api';
+import { toast } from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => void;
-  updateUser: (data: UserUpdateData) => Promise<void>;
+  isAgeEligible: (age: number) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Check for existing token and user data on mount
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (authService.isAuthenticated()) {
-          setUser(authService.getUser());
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Verify token and get user data
+      api.get<{ data: { user: User } }>('/auth/me')
+        .then(response => {
+          setUser(response.data.data.user);
           setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error('Auth initialization failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
+        })
+        .catch(() => {
+          // If token is invalid, clear it
+          localStorage.removeItem('token');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authService.login(email, password);
-      setUser(response.user);
+      setLoading(true);
+      const response = await api.post<AuthResponse>('/auth/login', { email, password });
+      const { user, token } = response.data;
+      
+      // Store the token
+      localStorage.setItem('token', token);
+      
+      // Set user data and authentication state
+      setUser(user);
       setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  };
 
-  const register = async (email: string, password: string, displayName: string) => {
-    try {
-      const response = await authService.register(email, password, displayName);
-      setUser(response.user);
-      setIsAuthenticated(true);
+      toast.success('Successfully logged in!');
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error('Login error:', error);
+      toast.error('Failed to login. Please check your credentials.');
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
-    authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
-  const updateUser = async (data: UserUpdateData) => {
     try {
-      const response = await api.put('/users/profile', data);
-      setUser(response.data);
+      setLoading(true);
+      // Call logout endpoint if it exists
+      api.post('/auth/logout').catch(() => {
+        // Ignore error if endpoint doesn't exist
+      });
+
+      // Clear stored token
+      localStorage.removeItem('token');
+      
+      // Reset state
+      setUser(null);
+      setIsAuthenticated(false);
+
+      toast.success('Successfully logged out!');
     } catch (error) {
-      console.error('Error updating user:', error);
-      throw error;
+      console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser
+  const isAgeEligible = (age: number) => {
+    return age >= 12 && age <= 25;
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, isAgeEligible }}>
       {children}
     </AuthContext.Provider>
   );
@@ -93,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

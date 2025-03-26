@@ -9,59 +9,57 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String    @id @default(uuid())
+  id             String    @id @default(cuid())
   email          String    @unique
   password       String
   displayName    String
-  avatar         String
   age           Int
   category      String
   parent_consent Boolean   @default(false)
+  avatar        String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   posts         Post[]
   comments      Comment[]
-  likes         Like[]
+  activities    Activity[]
 }
 
 model Post {
-  id        String    @id @default(uuid())
-  content   String
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  comments  Comment[]
-  likes     Like[]
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  isAnonymous Boolean   @default(false)
+  anonymousId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  comments    Comment[]
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  content   String
-  authorId  String
-  postId    String
-  author    User     @relation(fields: [authorId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  likes     Like[]
+  id          String    @id @default(cuid())
+  content     String
+  isAnonymous Boolean   @default(false)
+  anonymousId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
 }
 
-model Like {
+model Activity {
   id        String   @id @default(uuid())
+  type      String   // e.g., "login", "profile_update", "post_created"
+  details   String?
   userId    String
-  postId    String?
-  commentId String?
   user      User     @relation(fields: [userId], references: [id])
-  post      Post?    @relation(fields: [postId], references: [id])
-  comment   Comment? @relation(fields: [commentId], references: [id])
   createdAt DateTime @default(now())
-
-  @@unique([userId, postId])
-  @@unique([userId, commentId])
 }

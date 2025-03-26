@@ -1,156 +1,183 @@
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Users, Heart, BookOpen, Shield } from 'lucide-react';
+import { ArrowRight, Heart, Users, BookOpen, Shield, Award, Target } from 'lucide-react';
+import { homeImages } from '@/assets/images';
+
+const values = [
+  {
+    icon: <Heart className="w-8 h-8" />,
+    title: 'Empathy',
+    description: 'We put ourselves in our users\' shoes to understand their needs and challenges.'
+  },
+  {
+    icon: <Users className="w-8 h-8" />,
+    title: 'Community',
+    description: 'We foster a supportive environment where everyone can learn and grow together.'
+  },
+  {
+    icon: <BookOpen className="w-8 h-8" />,
+    title: 'Education',
+    description: 'We believe in providing quality education that empowers and transforms lives.'
+  },
+  {
+    icon: <Shield className="w-8 h-8" />,
+    title: 'Safety',
+    description: 'We ensure a secure and trusted environment for all our users.'
+  },
+  {
+    icon: <Award className="w-8 h-8" />,
+    title: 'Excellence',
+    description: 'We strive for excellence in everything we do to serve our community better.'
+  },
+  {
+    icon: <Target className="w-8 h-8" />,
+    title: 'Innovation',
+    description: 'We continuously innovate to provide the best learning experience.'
+  }
+];
+
+const team = [
+  {
+    name: 'Sarah Johnson',
+    role: 'Founder & CEO',
+    bio: 'With over 15 years in education, Sarah is passionate about making quality education accessible to all.',
+    image: homeImages.testimonial1
+  },
+  {
+    name: 'David Mutoni',
+    role: 'Head of Education',
+    bio: 'David brings his expertise in curriculum development and educational psychology to shape our learning programs.',
+    image: homeImages.testimonial2
+  },
+  {
+    name: 'Emma Rodriguez',
+    role: 'Community Manager',
+    bio: 'Emma ensures our community remains supportive, engaging, and valuable for all members.',
+    image: homeImages.testimonial3
+  }
+];
 
 export function AboutPage() {
-  const teamMembers = [
-    {
-      name: "Dr. Sarah Mutesi",
-      role: "Medical Director",
-      description: "Specialist in reproductive health with 15 years of experience"
-    },
-    {
-      name: "Marie Claire Uwamahoro",
-      role: "Community Lead",
-      description: "Expert in youth education and community engagement"
-    },
-    {
-      name: "Jean Paul Mugisha",
-      role: "Technology Lead",
-      description: "Digital health platform specialist"
-    }
-  ];
-
-  const values = [
-    {
-      icon: Shield,
-      title: "Privacy & Safety",
-      description: "We ensure a safe, confidential environment for all users"
-    },
-    {
-      icon: Heart,
-      title: "Empathy & Support",
-      description: "Creating a supportive community for learning and growth"
-    },
-    {
-      icon: BookOpen,
-      title: "Education First",
-      description: "Providing accurate, age-appropriate information"
-    },
-    {
-      icon: Users,
-      title: "Community Focus",
-      description: "Building strong connections among young women"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-purple-50">
       {/* Hero Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-purple-900 mb-6">
-            About AMASIMBI
-          </h1>
-          <p className="text-xl text-purple-700 max-w-3xl mx-auto">
-            AMASIMBI is dedicated to empowering young women in Rwanda through comprehensive 
-            reproductive health education and community support.
-          </p>
+      <section className="relative h-[500px] flex items-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${homeImages.hero})` }}
+        >
+          <div className="absolute inset-0 bg-purple-900 bg-opacity-70" />
+        </div>
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-3xl text-white"
+          >
+            <h1 className="text-5xl font-bold mb-6">
+              Our Mission
+            </h1>
+            <p className="text-xl mb-8">
+              At Amasimbi, we're dedicated to empowering young minds through accessible, 
+              quality education and fostering a supportive community for growth and learning.
+            </p>
+            <Link to="/register">
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                Join Our Community <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* Mission & Impact */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="bg-purple-50 p-8 rounded-2xl">
-              <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Mission</h2>
-              <p className="text-lg text-purple-700">
-                To bridge the information gap in reproductive health education by providing 
-                accessible, culturally sensitive resources and creating a supportive community 
-                for young women aged 12-25 in Rwanda.
-              </p>
-            </div>
-            <div className="bg-purple-50 p-8 rounded-2xl">
-              <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Impact</h2>
-              <ul className="space-y-4 text-lg text-purple-700">
-                <li>• Over 10,000 young women reached</li>
-                <li>• 50+ expert contributors</li>
-                <li>• 100+ educational resources</li>
-                <li>• Active community support network</li>
-              </ul>
-            </div>
+      {/* Values Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Values</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              These core values guide everything we do at Amasimbi, from developing our 
+              platform to interacting with our community.
+            </p>
           </div>
-        </div>
-      </section>
-
-      {/* Our Values */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-purple-900 mb-12 text-center">
-            Our Values
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {values.map((value, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <value.icon className="w-12 h-12 text-purple-600 mb-4" />
-                <h3 className="text-xl font-semibold text-purple-900 mb-2">
-                  {value.title}
-                </h3>
-                <p className="text-purple-700">
-                  {value.description}
-                </p>
-              </div>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="text-purple-600 mb-4">{value.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{value.title}</h3>
+                <p className="text-gray-600">{value.description}</p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Team Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-purple-900 mb-12 text-center">
-            Our Team
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {teamMembers.map((member, index) => (
-              <div key={index} className="bg-purple-50 p-6 rounded-xl">
-                <h3 className="text-xl font-semibold text-purple-900 mb-2">
-                  {member.name}
-                </h3>
-                <p className="text-purple-600 font-medium mb-3">
-                  {member.role}
-                </p>
-                <p className="text-purple-700">
-                  {member.description}
-                </p>
-              </div>
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-purple-900 mb-4">Our Team</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Meet the passionate individuals behind Amasimbi who work tirelessly to 
+              make quality education accessible to all.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {team.map((member, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden"
+              >
+                <div className="h-64 overflow-hidden">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
+                  <p className="text-purple-600 mb-4">{member.role}</p>
+                  <p className="text-gray-600">{member.bio}</p>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-purple-900 mb-6">
-            Join Our Community
-          </h2>
-          <p className="text-xl text-purple-700 mb-8">
-            Be part of our mission to empower young women through education and support.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <section className="py-20 bg-purple-900 text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl font-bold mb-6">Join Our Growing Community</h2>
+            <p className="text-lg mb-8 max-w-2xl mx-auto">
+              Be part of our mission to transform education and empower the next generation 
+              of learners. Start your journey with Amasimbi today.
+            </p>
             <Link to="/register">
-              <Button size="lg" className="w-full sm:w-auto">
-                Create Account
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-purple-50">
+                Get Started Today <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
-            <Link to="/contact">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Contact Us
-              </Button>
-            </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>
